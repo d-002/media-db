@@ -1,0 +1,9 @@
+# images
+Images/*
+
+# node
+node_modules
+
+# vim
+*~
+*.swp
