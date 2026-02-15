@@ -24,4 +24,5 @@ Image indexing and retrieval with CLIP.
 
 ## Upcoming
 
+- Rename media
 - Videos support

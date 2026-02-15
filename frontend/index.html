@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
         <title>Mediadb Viewer</title>
         <link rel="stylesheet" href="style.css">
@@ -9,19 +10,19 @@
             <p>Global tags</p>
             <div id="filter-tags" class="tags-container">
                 <span class="tag selected">Lorem ipsum
-                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)" title="Delete tag">
                 </span>
                 <span class="tag">Lorem ipsum
-                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)" title="Delete tag">
                 </span>
                 <span class="tag selected">Lorem ipsum
-                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)" title="Delete tag">
                 </span>
                 <span class="tag selected">Lorem ipsum
-                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)" title="Delete tag">
                 </span>
                 <span class="tag">Lorem ipsum
-                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)" title="Delete tag">
                 </span>
             </div>
 
@@ -30,7 +31,7 @@
                 <a onclick="clearTagFilters()">Clear filters</a>
             </div>
 
-            <p id="current-name">Very very very long media name</p>
+            <p id="current-name">Media name</p>
             <p id="current-date">Media date</p>
 
             <p>Current tags</p>
@@ -50,10 +51,10 @@
 
         <div id="center">
             <div id="main-content">
-                <div class="action" id="action-previous" onclick="previous()">
+                <div class="action" id="action-previous" onclick="previous()" title="Previous">
                     <img class="icon" src="images/prev.png">
                 </div>
-                <div class="action" id="action-next" onclick="next()">
+                <div class="action" id="action-next" onclick="next()" title="Next">
                     <img class="icon" src="images/prev.png" style="transform: scaleX(-1)">
                 </div>
 
@@ -61,19 +62,19 @@
             </div>
 
             <div id="bar">
-                <a id="new-media" onclick="upload()">
+                <a id="new-media" onclick="upload()" title="Upload media">
                     <img class="icon" src="images/plus.png">
                 </a>
 
                 <form action="javascript:search()">
-                    <input type="text" id="prompt" placeholder="Find media with AI">
+                    <input type="text" id="prompt" placeholder="Search with AI">
                 </form>
 
-                <a id="search" onclick="search()">
+                <a id="search" onclick="search()" title="Search with AI">
                     <img class="icon" src="images/search.png">
                 </a>
 
-                <a id="trash" onclick="trash()">
+                <a id="trash" onclick="trash()" title="Delete media">
                     <img class="icon" src="images/trash.png">
                 </a>
             </div>
