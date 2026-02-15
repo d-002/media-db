@@ -9,19 +9,19 @@
             <p>Global tags</p>
             <div id="filter-tags" class="tags-container">
                 <span class="tag selected">Lorem ipsum
-                    <img src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
                 </span>
                 <span class="tag">Lorem ipsum
-                    <img src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
                 </span>
                 <span class="tag selected">Lorem ipsum
-                    <img src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
                 </span>
                 <span class="tag selected">Lorem ipsum
-                    <img src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
                 </span>
                 <span class="tag">Lorem ipsum
-                    <img src="images/cross.png" onclick="deleteTag(this)">
+                    <img class="icon" src="images/cross.png" onclick="deleteTag(this)">
                 </span>
             </div>
 
@@ -51,10 +51,10 @@
         <div id="center">
             <div id="main-content">
                 <div class="action" id="action-previous" onclick="previous()">
-                    <img src="images/prev.png">
+                    <img class="icon" src="images/prev.png">
                 </div>
                 <div class="action" id="action-next" onclick="next()">
-                    <img src="images/prev.png" style="transform: scaleX(-1)">
+                    <img class="icon" src="images/prev.png" style="transform: scaleX(-1)">
                 </div>
 
                 <img id="content" src="images/placeholder.png">
@@ -62,19 +62,19 @@
 
             <div id="bar">
                 <a id="new-media" onclick="upload()">
-                    <img src="images/plus.png">
+                    <img class="icon" src="images/plus.png">
                 </a>
 
                 <form action="javascript:search()">
-                    <input type="text" id="prompt">
+                    <input type="text" id="prompt" placeholder="Find media with AI">
                 </form>
 
                 <a id="search" onclick="search()">
-                    <img src="images/search.png">
+                    <img class="icon" src="images/search.png">
                 </a>
 
                 <a id="trash" onclick="trash()">
-                    <img src="images/trash.png">
+                    <img class="icon" src="images/trash.png">
                 </a>
             </div>
         </div>
