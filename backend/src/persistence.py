@@ -56,7 +56,7 @@ class Persistence(DataBase):
 
         return tag['name']
 
-    def add_image_everywhere(self, name, timestamp: float,
+    def add_image_everywhere(self, name: str, timestamp: float,
                              upload_file: UploadFile) -> int:
         if upload_file.filename is None:
             self._error(400, 'Incorrect file name.')

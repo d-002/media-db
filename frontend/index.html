@@ -1,0 +1,104 @@
+<html>
+    <head>
+        <title>Mediadb Viewer</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+        <div id="left">
+            <p>Global tags</p>
+            <div id="filter-tags" class="tags-container">
+                <span class="tag selected">Lorem ipsum
+                    <img src="images/cross.png" onclick="deleteTag(this)">
+                </span>
+                <span class="tag">Lorem ipsum
+                    <img src="images/cross.png" onclick="deleteTag(this)">
+                </span>
+                <span class="tag selected">Lorem ipsum
+                    <img src="images/cross.png" onclick="deleteTag(this)">
+                </span>
+                <span class="tag selected">Lorem ipsum
+                    <img src="images/cross.png" onclick="deleteTag(this)">
+                </span>
+                <span class="tag">Lorem ipsum
+                    <img src="images/cross.png" onclick="deleteTag(this)">
+                </span>
+            </div>
+
+            <div class="buttons-flex">
+                <a onclick="applyTagFilters()">Filter media</a>
+                <a onclick="clearTagFilters()">Clear filters</a>
+            </div>
+
+            <p id="current-name">Very very very long media name</p>
+            <p id="current-date">Media date</p>
+
+            <p>Current tags</p>
+            <div id="current-tags" class="tags-container">
+                <span class="tag selected">Lorem ipsum</span>
+                <span class="tag selected">Lorem ipsum</span>
+                <span class="tag">Lorem ipsum</span>
+                <span class="tag">Lorem ipsum</span>
+                <span class="tag">Lorem ipsum</span>
+            </div>
+
+            <form id="new-tag" action="javascript:createNewTag()">
+                <input type="text" id="new-tag-name">
+                <input type="submit" value="Create">
+            </form>
+        </div>
+
+        <div id="center">
+            <div id="main-content">
+                <div class="action" id="action-previous" onclick="previous()">
+                    <img src="images/prev.png">
+                </div>
+                <div class="action" id="action-next" onclick="next()">
+                    <img src="images/prev.png" style="transform: scaleX(-1)">
+                </div>
+
+                <img id="content" src="images/placeholder.png">
+            </div>
+
+            <div id="bar">
+                <a id="new-media" onclick="upload()">
+                    <img src="images/plus.png">
+                </a>
+
+                <form action="javascript:search()">
+                    <input type="text" id="prompt">
+                </form>
+
+                <a id="search" onclick="search()">
+                    <img src="images/search.png">
+                </a>
+
+                <a id="trash" onclick="trash()">
+                    <img src="images/trash.png">
+                </a>
+            </div>
+        </div>
+
+        <div id="right">
+            <div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png" class="selected"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <span class="day-separator">New day separator</span>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+                <div><img src="images/placeholder.png"></div>
+            </div>
+        </div>
+    </body>
+
+    <script src="app.js"></script>
+</html>

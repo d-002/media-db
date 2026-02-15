@@ -22,8 +22,6 @@ Image indexing and retrieval with CLIP.
 - `pip install -r requirements.txt`
 - Run `main.py` with Python3
 
-## Roadmap
+## Upcoming
 
-- Yaml for restful api
-- Frontend
-- Videos?
+- Videos support
