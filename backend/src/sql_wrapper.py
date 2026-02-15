@@ -37,7 +37,11 @@ class DataBase:
         self.con.close()
 
     def _init_db(self) -> None:
-        self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='images'")
+        self.cur.execute("""
+        SELECT name
+        FROM sqlite_master
+        WHERE type='table'
+        AND name='images'""")
         exists = self.cur.fetchone()
 
         self.cur.execute("""
@@ -72,7 +76,7 @@ class DataBase:
             for tag in DataBase.basic_tags:
                 self._add_tag(tag)
 
-        self._add_tag('minecraft')
+            self._add_tag('minecraft')
 
     def reset_db(self) -> None:
         self._log('Resetting database.')
@@ -83,7 +87,7 @@ class DataBase:
 
         self._init_db()
 
-    def get_image_from_id(self, id: int) -> dict:
+    def _get_image_from_id(self, id: int) -> dict | None:
         self.cur.execute("""
         SELECT images.*
         FROM images
@@ -99,7 +103,7 @@ class DataBase:
         """, [path])
         return self.cur.fetchone()
 
-    def get_tag_from_id(self, id: int) -> dict:
+    def get_tag_from_id(self, id: int) -> dict | None:
         self.cur.execute("""
         SELECT tags.*
         FROM tags
@@ -146,6 +150,23 @@ class DataBase:
 
         return self.cur.lastrowid
 
+    def _unassign_tag(self, image_id: int, tag_id: int) -> None:
+        self.cur.execute("""
+        DELETE FROM tags_join
+        WHERE tags_join.image_id = ?
+        AND tags_join.tag_id = ?
+        """, [image_id, tag_id])
+        self.con.commit()
+
+    def _get_join_from_ids(self, image_id: int, tag_id: int) -> dict:
+        self.cur.execute("""
+        SELECT tags_join.id
+        FROM tags_join
+        WHERE tags_join.image_id = ?
+        AND tags_join.tag_id = ?
+        """, [image_id, tag_id])
+        return self.cur.fetchone()
+
     def _try_assign_tags(self, img_id: int):
         self.cur.execute("""
         SELECT images.*
@@ -164,7 +185,7 @@ class DataBase:
         assigned_tags = self.cur.fetchall()
         assigned_tag_ids = [tag['id'] for tag in assigned_tags]
 
-        for tag in self.all_tags():
+        for tag in self._all_tags():
             tag_id = tag['id']
             if tag_id in assigned_tag_ids:
                 continue
@@ -178,7 +199,7 @@ class DataBase:
                 self._log(f'- Adding tag {tag['name']} ({int(score * 100)}%).')
                 self._assign_tag(img_id, tag_id)
 
-    def get_image_tags(self, image_id: int):
+    def get_image_tags(self, image_id: int) -> list[int]:
         self.cur.execute("""
         SELECT DISTINCT tags.id
         FROM tags
@@ -186,16 +207,16 @@ class DataBase:
         ON tags.id = tags_join.tag_id
         WHERE tags_join.image_id = ?
         """, [image_id])
-        return self.cur.fetchall()
+        return [tag['id'] for tag in self.cur.fetchall()]
 
-    def all_images(self) -> list[dict]:
+    def _all_images(self) -> list[dict]:
         self.cur.execute("""
         SELECT images.*
         FROM images
         """)
         return self.cur.fetchall()
 
-    def all_tags(self) -> list[dict]:
+    def _all_tags(self) -> list[dict]:
         self.cur.execute("""
         SELECT tags.*
         FROM tags
@@ -236,7 +257,8 @@ class DataBase:
         """, tag_ids)
         return self.cur.fetchall()
 
-    def _filter_around(self, timestamp: float, tag_ids: list[int], n: int) -> list[int]:
+    def _filter_around(self, timestamp: float, tag_ids: list[int],
+                       n: int) -> list[int]:
         placeholders = ', '.join(['?'] * len(tag_ids))
 
         self.cur.execute(f"""

@@ -1,47 +1,113 @@
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, UploadFile, responses
+from pydantic import BaseModel
+
+from .model import Model
 from .persistence import Persistence
 
-class Api:
-    def __init__(self, persistence: Persistence):
-        self.persistence = persistence
+def setup_api(db_path: str, images_path: str):
+    model = Model()
+    db = Persistence(db_path, images_path, model, verbose=True)
+    db.sync()
 
-    def reset(self):
-        self.persistence.reset_db()
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        yield
 
-    def image_data_from_id(self, id: int):
-        res = self.persistence.get_image_data(id)
+        app.state.db.close()
+        print('Database connection closed.')
 
-    def tag_from_id(self, id: int):
-        res = self.persistence.get_tag_from_id(id)
+    app = FastAPI(lifespan=lifespan)
 
-    def all_images(self):
-        res = self.persistence.all_images()
+    @app.get("/image/{image_id}/data")
+    async def image_data_from_id(image_id: int):
+        res = db.get_image_path_for_data(image_id)
+        return responses.FileResponse(res)
 
-    def all_tags(self):
-        res = self.persistence.all_tags()
+    @app.delete("/image/{image_id}/delete")
+    async def remove_image(image_id: int):
+        db.remove_image_everywhere(image_id)
 
-    def add_image(self, path: str, data: bytes, date: int):
-        id = self.persistence.add_image_everywhere(path, data, date)
+    @app.get("/image/{image_id}/tags")
+    async def get_image_tags(image_id: int):
+        tag_ids = db.get_image_tags(image_id)
+        return {'tag_ids': tag_ids}
 
-    def remove_image(self, id: int):
-        ok = self.persistence.remove_image_everywhere(id)
+    @app.get("/images/list")
+    async def all_images():
+        image_ids = db.all_images()
+        return {'image_ids': image_ids}
 
-    def add_tag(self, name: str):
-        id = self.persistence.new_tag(name)
+    class ImageData(BaseModel):
+        path: str
+        date: float
+        file: UploadFile
 
-    def remove_tag(self, id: int):
-        ok = self.persistence.remove_tag_everywhere(id)
+    @app.post("/images/add")
+    async def add_image(image_data: ImageData):
+        image_id = db.add_image_everywhere(image_data.path,
+                                              image_data.date,
+                                              image_data.file)
+        return {'image_id': image_id}
 
-    def assign(self, image_id: int, tag_id: int):
-        ok = self.persistence.assign_tag(image_id, tag_id)
+    class FilterData(BaseModel):
+        tag_ids: list[int]
 
-    def get_image_tags(self, image_id: int):
-        res = self.persistence.get_image_tags(image_id)
+    @app.post("/images/filter")
+    async def filter_images(filter_data: FilterData):
+        image_ids = db.filter_images(filter_data.tag_ids)
+        return {'image_ids': image_ids}
 
-    def filter_images(self, tag_ids: list[int]):
-        res = self.persistence.filter_images(tag_ids)
+    class AroundData(BaseModel):
+        image_id: int
+        tag_ids: list[int]
+        n: int
 
-    def filter_around(self, image_id: int, tag_ids: list[int], n: int):
-        res = self.persistence.filter_around(image_id, tag_ids, n)
+    @app.post("/images/around")
+    async def filter_around(around_data: AroundData):
+        image_ids = db.filter_around(around_data.image_id,
+                                        around_data.tag_ids,
+                                        around_data.n)
+        return {'image_ids': image_ids}
 
-    def prompt_n_best(self, prompt: str, n: int):
-        res = self.persistence.prompt_n_best(prompt, n)
+    class Prompt(BaseModel):
+        prompt: str
+        n: int
+
+    @app.get("/images/best")
+    async def prompt_n_best(prompt: Prompt):
+        image_ids = db.prompt_n_best(prompt.prompt, prompt.n)
+        return {'image_ids': image_ids}
+
+    @app.get("/tag/{tag_id}/name")
+    async def tag_name_from_id(tag_id: int):
+        name = db.get_tagname_from_id(tag_id)
+        return {'name': name}
+
+    @app.delete("/tag/{tag_id}/remove")
+    async def remove_tag(tag_id: int):
+        db.remove_tag_everywhere(tag_id)
+
+    @app.get("/tags/list")
+    async def all_tags():
+        tag_ids = db.all_tags()
+        return {'tag_ids': tag_ids}
+
+    @app.post("/tags/add/{tag_name}")
+    async def add_tag(tag_name: str):
+        tag_id = db.add_tag(tag_name)
+        return {'tag_id': tag_id}
+
+    @app.post("/assign/{image_id}/{tag_id}")
+    async def assign(image_id: int, tag_id: int):
+        db.assign_tag(image_id, tag_id)
+
+    @app.post("/unassign/{image_id}/{tag_id}")
+    async def unassign(image_id: int, tag_id: int):
+        db.unassign_tag(image_id, tag_id)
+
+    @app.delete("/empty")
+    async def reset():
+        db.reset_db()
+
+    return app

@@ -1,2 +1,4 @@
 pillow
 sentence-transformers
+fastapi
+multipart
