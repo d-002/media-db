@@ -1,5 +1,5 @@
 # images
-Images/*
+Images
 
 # node
 node_modules
@@ -7,3 +7,9 @@ node_modules
 # vim
 *~
 *.swp
+
+# python
+__pycache__
+
+# sqlite
+*.db
