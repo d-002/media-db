@@ -13,7 +13,8 @@ Image indexing and retrieval with CLIP.
   and their usages inside the database.
 - Manually add and remove an image's tags.
 - Search for an image using tags.
-- Search for image matches using text prompts.
+- Search for the n best image matches from a text prompt.
+- Query n images around (timewise) an image, matching specific tags
 
 ### Running the backend
 

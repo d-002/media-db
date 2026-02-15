@@ -23,12 +23,12 @@ class DataBase:
         self.con.row_factory = sqlite3.Row
         self.cur = self.con.cursor()
 
-        self.reset_db()
-        #self.init_db()
+        #self.reset_db()
+        self.init_db()
 
         self._log()
 
-    def _log(self, *args, **kwargs):
+    def _log(self, *args, **kwargs) -> None:
         if self.verbose:
             print(*args, **kwargs)
 
@@ -36,7 +36,7 @@ class DataBase:
         self._log('Closing database connection.')
         self.con.close()
 
-    def init_db(self):
+    def init_db(self) -> None:
         self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='images'")
         exists = self.cur.fetchone()
 
@@ -126,6 +126,7 @@ class DataBase:
         INSERT INTO tags_join (image_id, tag_id)
         VALUES (?, ?)
         """, [image_id, hash_id])
+        self.con.commit()
 
         return self.cur.lastrowid
 
@@ -174,3 +175,25 @@ class DataBase:
         FROM tags
         """)
         return self.cur.fetchall()
+
+    def remove_image(self, id: int) -> None:
+        self.cur.execute("""
+        DELETE FROM images
+        WHERE images.id = ?
+        """, [id])
+        self.cur.execute("""
+        DELE FROM tags_join
+        WHERE tags_join.image_id = ?
+        """, [id])
+        self.con.commit()
+
+    def remove_tag(self, id: int) -> None:
+        self.cur.execute("""
+        DELETE FROM tags
+        WHERE tags.id = ?
+        """, [id])
+        self.cur.execute("""
+        DELE FROM tags_join
+        WHERE tags_join.tag_id = ?
+        """, [id])
+        self.con.commit()

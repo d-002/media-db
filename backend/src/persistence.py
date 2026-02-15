@@ -19,14 +19,25 @@ class Persistence(DataBase):
 
         total = 0
         added = 0
-        for file in list_files(self.images_dir):
+        deleted = 0
+
+        present = list_files(self.images_dir)
+        for file in present:
             h = self.myhash(file)
             if not self.contains_image_hash(h):
                 self.new_image(file)
                 added += 1
             total += 1
 
-        self._log(f'Sync summary: {total} total, including {added} additions.')
+        present_paths = [file.path for file in present]
+        for file in self.all_images():
+            path = file['path']
+            if path not in present_paths:
+                self.remove_image(path)
+                deleted += 1
+
+        self._log(f'Sync summary: {total} total, {added} additions, '
+                  f'{deleted} deletions.')
 
     def new_image(self, file: FilePath) -> bool:
         h = self.myhash(file)
