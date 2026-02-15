@@ -10,30 +10,20 @@ Image indexing and retrieval with CLIP.
 - Add an image to the list of images, generate its tags and insert it into the
   database.
 - Update the list of tags, which will remove or potentially add related tags
-  inside the database.
-- Manually associate tags for an image.
+  and their usages inside the database.
+- Manually add and remove an image's tags.
 - Search for an image using tags.
 - Search for image matches using text prompts.
 
-### Requirements
-
-### Installation
+### Running the backend
 
 - Install Python3
 - `pip install -r requirements.txt`
+- Run `main.py` with Python3
 
 ## Roadmap
 
-**Done**
-
-**To do**
-
-+ Set up CLIP
-- Set up Python and database in backend
-- Set up tests, CI?
 - Yaml roadmap for restful api
 - Implement all endpoints
-
 - Frontend
-
 - Videos?
