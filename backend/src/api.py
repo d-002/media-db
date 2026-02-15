@@ -23,6 +23,10 @@ def setup_api(db_path: str, images_path: str):
         res = db.get_image_path_for_data(image_id)
         return responses.FileResponse(res)
 
+    @app.get("/image/{image_id}/info")
+    async def image_info_from_id(image_id: int):
+        return db.image_info_from_id(image_id)
+
     @app.delete("/image/{image_id}/delete")
     async def remove_image(image_id: int):
         db.remove_image_everywhere(image_id)
@@ -58,10 +62,9 @@ def setup_api(db_path: str, images_path: str):
         image_ids = db.prompt_n_best(prompt, n)
         return {'image_ids': image_ids}
 
-    @app.get("/tag/{tag_id}/name")
-    async def tag_name_from_id(tag_id: int):
-        name = db.get_tagname_from_id(tag_id)
-        return {'name': name}
+    @app.get("/tag/{tag_id}/info")
+    async def tag_info_from_id(tag_id: int):
+        return db.tag_info_from_id(tag_id)
 
     @app.delete("/tag/{tag_id}/remove")
     async def remove_tag(tag_id: int):

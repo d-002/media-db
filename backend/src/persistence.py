@@ -49,12 +49,20 @@ class Persistence(DataBase):
     def all_tags(self) -> list[int]:
         return [tag['id'] for tag in self._all_tags()]
 
-    def get_tagname_from_id(self, id: int) -> str:
+    def image_info_from_id(self, id: int) -> dict:
+        image = self._get_image_from_id(id)
+        if image is None:
+            self._error(404, 'Image not found.')
+
+        return {'id': image['id'], 'path': image['path'],
+                'timestamp': image['timestamp']}
+
+    def tag_info_from_id(self, id: int) -> dict:
         tag = self._get_tag_from_id(id)
         if tag is None:
             self._error(404, 'Tag not found.')
 
-        return tag['name']
+        return {'id': tag['id'], 'name': tag['name']}
 
     def add_image_everywhere(self, name: str, timestamp: float,
                              upload_file: UploadFile) -> int:
