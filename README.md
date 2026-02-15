@@ -24,7 +24,6 @@ Image indexing and retrieval with CLIP.
 
 ## Roadmap
 
-- Yaml roadmap for restful api
-- Implement all endpoints
+- Yaml for restful api
 - Frontend
 - Videos?

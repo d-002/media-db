@@ -23,8 +23,8 @@ class DataBase:
         self.con.row_factory = sqlite3.Row
         self.cur = self.con.cursor()
 
-        #self.reset_db()
-        self.init_db()
+        self.reset_db()
+        #self._init_db()
 
         self._log()
 
@@ -36,15 +36,15 @@ class DataBase:
         self._log('Closing database connection.')
         self.con.close()
 
-    def init_db(self) -> None:
+    def _init_db(self) -> None:
         self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='images'")
         exists = self.cur.fetchone()
 
         self.cur.execute("""
         CREATE TABLE IF NOT EXISTS images (
             id INTEGER PRIMARY KEY,
-            hash TEXT,
             path TEXT,
+            timestamp REAL,
             embedding BLOB
         )""")
         self.cur.execute("""
@@ -70,9 +70,9 @@ class DataBase:
             self._log('Adding basic tags because there are none.')
 
             for tag in DataBase.basic_tags:
-                self.add_tag(tag)
+                self._add_tag(tag)
 
-        self.add_tag('minecraft')
+        self._add_tag('minecraft')
 
     def reset_db(self) -> None:
         self._log('Resetting database.')
@@ -81,37 +81,53 @@ class DataBase:
         self.cur.execute('DROP TABLE IF EXISTS tags_join')
         self.con.commit()
 
-        self.init_db()
+        self._init_db()
 
-    def contains_image_hash(self, h: str) -> bool:
+    def get_image_from_id(self, id: int) -> dict:
         self.cur.execute("""
-        SELECT images.id
+        SELECT images.*
         FROM images
-        WHERE images.hash = ?
-        """, [h])
-        return self.cur.fetchone() is not None
+        WHERE images.id = ?
+        """, [id])
+        return self.cur.fetchone()
 
-    def contains_tag(self, name: str) -> bool:
+    def _get_image_from_path(self, path: str) -> dict:
+        self.cur.execute("""
+        SELECT images.*
+        FROM images
+        WHERE images.path = ?
+        """, [path])
+        return self.cur.fetchone()
+
+    def get_tag_from_id(self, id: int) -> dict:
+        self.cur.execute("""
+        SELECT tags.*
+        FROM tags
+        WHERE tags.id = ?
+        """, [id])
+        return self.cur.fetchone()
+
+    def _get_tag_from_name(self, name: str) -> dict:
         self.cur.execute("""
         SELECT tags.id
         FROM tags
         WHERE tags.name = ?
         """, [name])
-        return self.cur.fetchone() is not None
+        return self.cur.fetchone()
 
-    def add_image(self, h: str, path: str) -> int | None:
+    def _add_image(self, path: str, timestamp: float) -> int | None:
         embedding = self.model.embed_image(path)
         embedding_blob = embedding.tobytes()
 
         self.cur.execute("""
-        INSERT INTO images (hash, path, embedding)
-        VALUES (?, ?, ?)""", [h, path, embedding_blob])
+        INSERT INTO images (path, timestamp, embedding)
+        VALUES (?, ?, ?)""", [path, timestamp, embedding_blob])
         self.con.commit()
 
         return self.cur.lastrowid
 
-    def add_tag(self, name: str) -> int | None:
-        embedding = self.model.embed_tag(name)
+    def _add_tag(self, name: str) -> int | None:
+        embedding = self.model.embed_text(name)
         embedding_blob = embedding.tobytes()
 
         self.cur.execute("""
@@ -121,16 +137,16 @@ class DataBase:
 
         return self.cur.lastrowid
 
-    def assign_tag(self, image_id: int, hash_id: int) -> int | None:
+    def _assign_tag(self, image_id: int, tag_id: int) -> int | None:
         self.cur.execute("""
         INSERT INTO tags_join (image_id, tag_id)
         VALUES (?, ?)
-        """, [image_id, hash_id])
+        """, [image_id, tag_id])
         self.con.commit()
 
         return self.cur.lastrowid
 
-    def try_assign_tags(self, img_id: int):
+    def _try_assign_tags(self, img_id: int):
         self.cur.execute("""
         SELECT images.*
         FROM images
@@ -140,7 +156,7 @@ class DataBase:
         img = self.cur.fetchone()
 
         self.cur.execute("""
-        SELECT tags.*
+        SELECT DISTINCT tags.*
         FROM tags
         JOIN tags_join
         WHERE tags_join.image_id = ?
@@ -160,7 +176,17 @@ class DataBase:
 
             if score > DataBase.min_sim_score:
                 self._log(f'- Adding tag {tag['name']} ({int(score * 100)}%).')
-                self.assign_tag(img_id, tag_id)
+                self._assign_tag(img_id, tag_id)
+
+    def get_image_tags(self, image_id: int):
+        self.cur.execute("""
+        SELECT DISTINCT tags.id
+        FROM tags
+        JOIN tags_join
+        ON tags.id = tags_join.tag_id
+        WHERE tags_join.image_id = ?
+        """, [image_id])
+        return self.cur.fetchall()
 
     def all_images(self) -> list[dict]:
         self.cur.execute("""
@@ -176,24 +202,53 @@ class DataBase:
         """)
         return self.cur.fetchall()
 
-    def remove_image(self, id: int) -> None:
+    def _remove_image(self, id: int) -> None:
         self.cur.execute("""
         DELETE FROM images
         WHERE images.id = ?
         """, [id])
         self.cur.execute("""
-        DELE FROM tags_join
+        DELETE FROM tags_join
         WHERE tags_join.image_id = ?
         """, [id])
         self.con.commit()
 
-    def remove_tag(self, id: int) -> None:
+    def _remove_tag(self, id: int) -> None:
         self.cur.execute("""
         DELETE FROM tags
         WHERE tags.id = ?
         """, [id])
         self.cur.execute("""
-        DELE FROM tags_join
+        DELETE FROM tags_join
         WHERE tags_join.tag_id = ?
         """, [id])
         self.con.commit()
+
+    def filter_images(self, tag_ids: list[int]) -> list[int]:
+        placeholders = ', '.join(['?'] * len(tag_ids))
+
+        self.cur.execute(f"""
+        SELECT DISTINCT images.id
+        FROM images
+        JOIN tags_join
+        ON images.id = tags_join.image_id
+        WHERE tags_join.tag_id in ({placeholders})
+        """, tag_ids)
+        return self.cur.fetchall()
+
+    def _filter_around(self, timestamp: float, tag_ids: list[int], n: int) -> list[int]:
+        placeholders = ', '.join(['?'] * len(tag_ids))
+
+        self.cur.execute(f"""
+        SELECT DISTINCT
+            images.id,
+            ABS(images.timestamp - ?) AS distance
+        FROM images
+        JOIN tags_join
+        ON images.id = tags_join.image_id
+        WHERE tags_join.tag_id in ({placeholders})
+        ORDER BY distance ASC
+        LIMIT ?
+        """, [timestamp, n])
+        return self.cur.fetchall()
+

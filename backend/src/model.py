@@ -10,8 +10,8 @@ class Model:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = SentenceTransformer(Model.model_name, device=device)
 
-    def embed_tag(self, tag: str) -> np.ndarray:
-        return self.model.encode(tag)
+    def embed_text(self, text: str) -> np.ndarray:
+        return self.model.encode(text)
 
     def embed_image(self, path: str) -> np.ndarray:
         return self.model.encode(Image.open(path))

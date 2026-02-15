@@ -1,5 +1,7 @@
+import os
+import re
+import numpy as np
 from sys import stderr
-from hashlib import sha256
 
 from .sql_wrapper import DataBase
 from .files import FilePath, list_files
@@ -10,9 +12,11 @@ class Persistence(DataBase):
                  verbose: bool = False):
         super().__init__(db_file, model, verbose)
         self.images_dir = images_dir
+        self.last_error = None
 
-    def myhash(self, file: FilePath):
-        return sha256(file.path.encode()).hexdigest()
+    def _error(self, msg: str):
+        self.last_error = msg
+        print(f'Error: {msg}', file=stderr)
 
     def sync(self):
         self._log('Syncing images.')
@@ -23,9 +27,8 @@ class Persistence(DataBase):
 
         present = list_files(self.images_dir)
         for file in present:
-            h = self.myhash(file)
-            if not self.contains_image_hash(h):
-                self.new_image(file)
+            if self._get_image_from_path(file.path) is None:
+                self._new_image(file, None)
                 added += 1
             total += 1
 
@@ -33,17 +36,32 @@ class Persistence(DataBase):
         for file in self.all_images():
             path = file['path']
             if path not in present_paths:
-                self.remove_image(path)
+                self._remove_image(path)
                 deleted += 1
 
         self._log(f'Sync summary: {total} total, {added} additions, '
                   f'{deleted} deletions.')
 
-    def new_image(self, file: FilePath) -> bool:
-        h = self.myhash(file)
-        if self.contains_image_hash(h):
-            print(f'Error: {file.path} already present.', file=stderr)
-            return False
+    def add_image_everywhere(self, name, data: bytes,
+                             timestamp: float) -> int | None:
+        # sanitize filename
+        name = re.sub('[^\\w\\s\\-+=_!,;.\'"]+', '_', name)
+        path = os.path.join(self.images_dir, name)
+
+        # add to disk
+        with open(path, 'wb') as f:
+            f.write(data)
+        # alter metadata
+        os.utime(path, (timestamp, timestamp))
+
+        # add to database
+        file = FilePath(path)
+        return self._new_image(file, timestamp)
+
+    def _new_image(self, file: FilePath, timestamp: float | None) -> int | None:
+        if self._get_image_from_path(file.path) is not None:
+            self._error(f'{file.path} already present.')
+            return None
 
         print(f'-> Adding new image \'{file.path}\'.')
 
@@ -54,28 +72,96 @@ class Persistence(DataBase):
                 self.new_tag(dirname)
 
         self._log('Automatically assigning tags in new image.')
-        id = self.add_image(h, file.path)
+        if timestamp is None:
+            timestamp = os.path.getmtime(file.path)
+        id = self._add_image(file.path, timestamp)
         if id is None:
             print('Failed to add image.', file=stderr)
-            return False
+            return None
 
         self._log('Generating tags for new image.')
-        self.try_assign_tags(id)
+        self._try_assign_tags(id)
 
         self._log()
-        return True
+        return id
 
-    def new_tag(self, name: str) -> bool:
-        if self.contains_tag(name):
-            print('Error: tag already present.')
-            return False
+    def new_tag(self, name: str) -> int | None:
+        if self._get_tag_from_name(name) is not None:
+            self._error('Tag already present.')
+            return None
 
         print(f'-> Adding new tag {name}')
-        self.add_tag(name)
+        id = self._add_tag(name)
 
         self._log('Updating tags for all images.')
         for image in self.all_images():
-            self.try_assign_tags(image['id'])
+            self._try_assign_tags(image['id'])
 
         self._log()
+        return id
+
+    def remove_image_everywhere(self, id: int) -> bool:
+        image = self.get_image_from_id(id)
+        if image is None:
+            self._error('Image not present.')
+            return False
+
+        path = image['path']
+        print(f'Removing image {path}')
+
+        # remove from database
+        self._remove_image(image['id'])
+        # remove from disk
+        os.remove(path)
+
         return True
+
+    def remove_tag_everywhere(self, id: int) -> bool:
+        tag = self.get_tag_from_id(id)
+        if tag is None:
+            self._error('Tag not present.')
+            return False
+
+        id = tag['id']
+        self._remove_tag(id)
+        return True
+
+    def assign_tag(self, image_id: int, tag_id: int) -> bool:
+        image = self.get_image_from_id(image_id)
+        tag = self.get_tag_from_id(tag_id)
+        if image is None or tag is None:
+            self._error('Image or tag not present.')
+            return False
+
+        self._assign_tag(image_id, tag_id)
+        return True
+
+    def get_image_data(self, image_id: int) -> bytes | None:
+        image = self.get_image_from_id(image_id)
+        if image is None:
+            self._error('Image not present.')
+            return None
+
+        with open(image['path'], 'rb') as f:
+            content = f.read()
+
+        return content
+
+    def prompt_n_best(self, prompt: str, n: int) -> list[int]:
+        l: list[tuple[int, float]] = []
+        prompt_embedding = self.model.embed_text(prompt)
+
+        for image in self.all_images():
+            img_embedding = np.frombuffer(image['embedding'], dtype=np.float32)
+            score = self.model.sim_score(img_embedding, prompt_embedding)[0]
+            l.append((image['id'], score))
+
+        return list(map(lambda t: t[0], sorted(l, key=lambda t: -t[1])[:n]))
+
+    def filter_around(self, image_id: int, tag_ids: list[int], n: int) -> list[int] | None:
+        image = self.get_image_from_id(image_id)
+        if image is None:
+            self._error('Image not present.')
+            return None
+
+        return self._filter_around(image['timestamp'], tag_ids, n)
