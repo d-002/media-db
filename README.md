@@ -1,7 +1,9 @@
 # media-db
 Image indexing and retrieval with CLIP.
 
-Backend features:
+## Backend
+
+### Features
 - Run CLIP locally to generate an embedding and tags for an image.
   These tags, as well as extra ones for the date and subfolders, are stored
   inside a database and associated with the image.
@@ -13,13 +15,20 @@ Backend features:
 - Search for an image using tags.
 - Search for image matches using text prompts.
 
+### Requirements
+
+### Installation
+
+- Install Python3
+- `pip install -r requirements.txt`
+
 ## Roadmap
 
 **Done**
 
 **To do**
 
-- Set up CLIP
++ Set up CLIP
 - Set up Python and database in backend
 - Set up tests, CI?
 - Yaml roadmap for restful api
