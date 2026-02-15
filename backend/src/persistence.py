@@ -118,7 +118,7 @@ class Persistence(DataBase):
         return id
 
     def remove_image_everywhere(self, id: int) -> None:
-        image = self.get_image_from_id(id)
+        image = self._get_image_from_id(id)
         if image is None:
             self._error(404, 'Image not present.')
 
@@ -131,7 +131,7 @@ class Persistence(DataBase):
         os.remove(path)
 
     def remove_tag_everywhere(self, id: int) -> None:
-        tag = self.get_tag_from_id(id)
+        tag = self._get_tag_from_id(id)
         if tag is None:
             self._error(404, 'Tag not present.')
 
@@ -139,8 +139,8 @@ class Persistence(DataBase):
         self._remove_tag(id)
 
     def assign_tag(self, image_id: int, tag_id: int) -> None:
-        image = self.get_image_from_id(image_id)
-        tag = self.get_tag_from_id(tag_id)
+        image = self._get_image_from_id(image_id)
+        tag = self._get_tag_from_id(tag_id)
         if image is None or tag is None:
             self._error(404, 'Image or tag not present.')
 
@@ -151,8 +151,8 @@ class Persistence(DataBase):
         self._assign_tag(image_id, tag_id)
 
     def unassign_tag(self, image_id: int, tag_id: int) -> None:
-        image = self.get_image_from_id(image_id)
-        tag = self.get_tag_from_id(tag_id)
+        image = self._get_image_from_id(image_id)
+        tag = self._get_tag_from_id(tag_id)
         if image is None or tag is None:
             self._error(404, 'Image or tag not present.')
 
@@ -163,7 +163,7 @@ class Persistence(DataBase):
         self._unassign_tag(image_id, tag_id)
 
     def get_image_path_for_data(self, image_id: int) -> str:
-        image = self.get_image_from_id(image_id)
+        image = self._get_image_from_id(image_id)
         if image is None:
             self._error(404, 'Image not present.')
 
@@ -182,7 +182,7 @@ class Persistence(DataBase):
 
     def filter_around(self, image_id: int, tag_ids: list[int],
                       n: int) -> list[int]:
-        image = self.get_image_from_id(image_id)
+        image = self._get_image_from_id(image_id)
         if image is None:
             self._error(404, 'Image not present.')
 

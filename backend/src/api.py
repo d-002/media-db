@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, UploadFile, responses
-from pydantic import BaseModel
+from fastapi import FastAPI, File, Form, UploadFile, responses
 
 from .model import Model
 from .persistence import Persistence
@@ -38,45 +37,25 @@ def setup_api(db_path: str, images_path: str):
         image_ids = db.all_images()
         return {'image_ids': image_ids}
 
-    class ImageData(BaseModel):
-        path: str
-        date: float
-        file: UploadFile
-
     @app.post("/images/add")
-    async def add_image(image_data: ImageData):
-        image_id = db.add_image_everywhere(image_data.path,
-                                              image_data.date,
-                                              image_data.file)
+    async def add_image(path: str = Form(...), date: float = Form(...),
+                        file: UploadFile = File(...)):
+        image_id = db.add_image_everywhere(path, date, file)
         return {'image_id': image_id}
 
-    class FilterData(BaseModel):
-        tag_ids: list[int]
-
     @app.post("/images/filter")
-    async def filter_images(filter_data: FilterData):
-        image_ids = db.filter_images(filter_data.tag_ids)
+    async def filter_images(tag_ids: list[int]):
+        image_ids = db.filter_images(tag_ids)
         return {'image_ids': image_ids}
-
-    class AroundData(BaseModel):
-        image_id: int
-        tag_ids: list[int]
-        n: int
 
     @app.post("/images/around")
-    async def filter_around(around_data: AroundData):
-        image_ids = db.filter_around(around_data.image_id,
-                                        around_data.tag_ids,
-                                        around_data.n)
+    async def filter_around(image_id: int, tag_ids: list[int], n: int):
+        image_ids = db.filter_around(image_id, tag_ids, n)
         return {'image_ids': image_ids}
 
-    class Prompt(BaseModel):
-        prompt: str
-        n: int
-
     @app.get("/images/best")
-    async def prompt_n_best(prompt: Prompt):
-        image_ids = db.prompt_n_best(prompt.prompt, prompt.n)
+    async def prompt_n_best(prompt: str, n: int):
+        image_ids = db.prompt_n_best(prompt, n)
         return {'image_ids': image_ids}
 
     @app.get("/tag/{tag_id}/name")

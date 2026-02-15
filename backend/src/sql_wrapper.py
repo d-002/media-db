@@ -103,7 +103,7 @@ class DataBase:
         """, [path])
         return self.cur.fetchone()
 
-    def get_tag_from_id(self, id: int) -> dict | None:
+    def _get_tag_from_id(self, id: int) -> dict | None:
         self.cur.execute("""
         SELECT tags.*
         FROM tags
