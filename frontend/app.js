@@ -370,6 +370,16 @@ function trashCurrent() {
     });
 }
 
+function syncDatabase() {
+    const ok = confirm("Really force resync the database?");
+    if (!ok)
+        return;
+
+    httpGet("/sync", [], () => {
+        updateGlobalTags();
+    });
+}
+
 function chooseDate() {
     const timestamp = new Date(elts.date.value).getTime() / 1000;
     httpGet("/images/date?timestamp=" + timestamp, [], image => {
