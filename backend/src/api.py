@@ -13,7 +13,7 @@ def setup_api(db_path: str, images_path: str):
     async def lifespan(app: FastAPI):
         yield
 
-        app.state.db.close()
+        db.close()
         print('Database connection closed.')
 
     app = FastAPI(lifespan=lifespan)
@@ -56,6 +56,11 @@ def setup_api(db_path: str, images_path: str):
     async def filter_around(image_id: int, tag_ids: list[int], n: int):
         image_ids = db.filter_around(image_id, tag_ids, n)
         return {'image_ids': image_ids}
+
+    @app.get("/images/date")
+    async def closest_to_date(timestamp: int):
+        image_id = db.closest_to_date(timestamp)
+        return {'image_id': image_id}
 
     @app.get("/images/best")
     async def prompt_n_best(prompt: str, n: int):

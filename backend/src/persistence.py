@@ -194,4 +194,8 @@ class Persistence(DataBase):
         if image is None:
             self._error(404, 'Image not present.')
 
-        return self._filter_around(image['timestamp'], tag_ids, n)
+        filtered = self._filter_around(image['timestamp'], tag_ids, n)
+        return [res['id'] for res in filtered]
+
+    def closest_to_date(self, timestamp: float) -> int:
+        return self._closest_to_date(timestamp)['id']

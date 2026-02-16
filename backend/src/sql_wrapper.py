@@ -258,7 +258,7 @@ class DataBase:
         return self.cur.fetchall()
 
     def _filter_around(self, timestamp: float, tag_ids: list[int],
-                       n: int) -> list[int]:
+                       n: int) -> list[dict]:
         placeholders = ', '.join(['?'] * len(tag_ids))
 
         self.cur.execute(f"""
@@ -274,3 +274,13 @@ class DataBase:
         """, [timestamp, n])
         return self.cur.fetchall()
 
+    def _closest_to_date(self, timestamp: float) -> dict:
+        self.cur.execute("""
+        SELECT
+            images.id,
+            ABS(images.timestamp - ?) AS distance
+        FROM images
+        ORDER BY distance ASC
+        LIMIT 1
+        """, [timestamp])
+        return self.cur.fetchone()
