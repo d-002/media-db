@@ -88,24 +88,23 @@ class Persistence(DataBase):
             self._error(409, f'{file.path} already present.')
 
         print(f'-> Adding new image \'{file.path}\'.')
-
-        self._log('Generating new tags from file path.')
-        for dirname in file.dirs:
-            if dirname not in self.all_tags():
-                self.add_tag(dirname, True)
-
-        self._log('Automatically assigning tags in new image.')
         if timestamp is None:
             timestamp = os.path.getmtime(file.path)
-        id = self._add_image(file.path, timestamp)
-        if id is None:
+        image_id = self._add_image(file.path, timestamp)
+        if image_id is None:
             self._error(500, 'Failed to add image.')
 
+        self._log('Generating new tags from file path and assigning.')
+        for dirname in file.dirs:
+            if dirname not in self.all_tags():
+                tag_id = self.add_tag(dirname, True)
+                self._assign_tag(image_id, tag_id)
+
         self._log('Generating tags for new image.')
-        self._try_assign_tags(id)
+        self._try_assign_tags(image_id)
 
         self._log()
-        return id
+        return image_id
 
     def add_tag(self, name: str, silent: bool = False) -> int:
         if self._get_tag_from_name(name) is not None:
@@ -187,6 +186,10 @@ class Persistence(DataBase):
             l.append((image['id'], score))
 
         return list(map(lambda t: t[0], sorted(l, key=lambda t: -t[1])[:n]))
+
+    def filter_images(self, tag_ids: list[int]) -> list[int]:
+        images = self._filter_images(tag_ids)
+        return [image['id'] for image in images]
 
     def filter_around(self, image_id: int, tag_ids: list[int],
                       n: int) -> list[int]:

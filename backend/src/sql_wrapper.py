@@ -245,16 +245,22 @@ class DataBase:
         """, [id])
         self.con.commit()
 
-    def filter_images(self, tag_ids: list[int]) -> list[int]:
-        placeholders = ', '.join(['?'] * len(tag_ids))
+    def _filter_images(self, tag_ids: list[int]) -> list[dict]:
+        if not tag_ids:
+            return self._all_images()
+
+        num_tags = len(tag_ids)
+        placeholders = ', '.join(['?'] * num_tags)
 
         self.cur.execute(f"""
-        SELECT DISTINCT images.id
+        SELECT images.id
         FROM images
         JOIN tags_join
         ON images.id = tags_join.image_id
         WHERE tags_join.tag_id in ({placeholders})
-        """, tag_ids)
+        GROUP BY images.id
+        HAVING COUNT(DISTINCT tags_join.tag_id) = ?
+        """, tag_ids + [num_tags])
         return self.cur.fetchall()
 
     def _filter_around(self, timestamp: float, tag_ids: list[int],
