@@ -3,6 +3,7 @@ const elts = {
     currentTags: "current-tags",
     currentName: "current-name",
     currentDate: "current-date",
+    newTagName: "new-tag-name",
     content: null,
 };
 
@@ -21,7 +22,7 @@ function globalTagClick(evt) {
             return;
 
         const tagId = evt.target.parentNode.getAttribute("tag-id");
-        httpDelete("/tag/" + tagId + "/remove", [], fetchTags);
+        httpDelete("/tag/" + tagId + "/remove", [], updateGlobalTags);
     }
     else if (eltType == "SPAN") {
         // toggle tag
@@ -46,7 +47,7 @@ function currentTagClick(evt) {
     }
 }
 
-function fetchTags(callback) {
+function updateGlobalTags(callback) {
     httpGet("/tags/list", [], json => {
         tagElts = [];
         elts.globalTags.innerHTML = "";
@@ -71,7 +72,8 @@ function fetchTags(callback) {
             tagElts[tag.id] = {global: globalSpan, current: currentSpan};
         });
 
-        callback();
+        if (callback != null)
+            callback();
     });
 }
 
@@ -138,8 +140,17 @@ function emptyTagFilters() {
     Array.from(elts.globalTags.children).forEach(elt => elt.classList.remove("selected"));
 }
 
+function createNewTag() {
+    name = elts.newTagName.value;
+    httpPost("/tags/new?tag_name=" + name, [], null, () => {
+        updateGlobalTags();
+        updateCurrentTags();
+        elts.newTagName.value = "";
+    });
+}
+
 function start() {
-    fetchTags(getImages);
+    updateGlobalTags(getImages);
 }
 
 Object.keys(elts).forEach(

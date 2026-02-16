@@ -32,9 +32,11 @@ a, input[type="submit"] {
 /* left */
 
 #left, #right {
-    overflow: hidden auto;
     height: 100%;
     max-width: 350px;
+
+    overflow: hidden auto;
+    box-sizing: border-box;
 
     background-color: #212123;
     box-shadow: 0 0 1.5em #00000070;
