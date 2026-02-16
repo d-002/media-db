@@ -39,11 +39,15 @@ class Persistence(DataBase):
         total = len(present)
         for i, file in enumerate(present):
             if not is_image(file.path):
-                self._log(f'Skipping {file.name}')
+                self._log(f'Skipping \'{file.name}\'')
                 continue
 
             if self._get_image_from_path(file.path) is None:
-                self._new_image(file, None)
+                try:
+                    self._new_image(file, None)
+                except HTTPException:
+                    print(f'Skipping \'{file.name}\' due to errors.')
+                    continue
                 added += 1
 
             print(f'Indexing {(i + 1) / total * 100:.2f}% complete.')
@@ -107,7 +111,10 @@ class Persistence(DataBase):
             except:
                 self._error(600, 'Failed to get file timestamp.')
 
-        image_id = self._add_image(file.path, timestamp)
+        try:
+            image_id = self._add_image(file.path, timestamp)
+        except OSError:
+            self._error(500, 'Failed to embed image.')
         if image_id is None:
             self._error(500, 'Failed to add image.')
 
