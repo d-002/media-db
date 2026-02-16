@@ -46,8 +46,8 @@ def setup_api(db_path: str, images_path: str,
                 summary='Delete image',
                 description='Delete image from the database and the local '
                             'files from its id.')
-    async def remove_image(image_id: int) -> None:
-        db.remove_image_everywhere(image_id)
+    async def delete_image(image_id: int) -> None:
+        db.delete_image_everywhere(image_id)
 
     @app.get('/image/{image_id}/tags',
              summary='Get image tags',
@@ -102,12 +102,12 @@ def setup_api(db_path: str, images_path: str,
     async def prompt_n_best(prompt: str, n: int) -> list[dict]:
         return [db.safe_image(image) for image in db.prompt_n_best(prompt, n)]
 
-    @app.delete('/tag/{tag_id}/remove',
-                summary='Remove tag',
-                description='Remove tag from the database by id. '
+    @app.delete('/tag/{tag_id}/delete',
+                summary='Delete tag',
+                description='Delete tag from the database by id. '
                             'Any assignation of it will be discarded.')
-    async def remove_tag(tag_id: int) -> None:
-        db.remove_tag_everywhere(tag_id)
+    async def delete_tag(tag_id: int) -> None:
+        db.delete_tag_everywhere(tag_id)
 
     @app.get('/tags/list',
              summary='List tags',

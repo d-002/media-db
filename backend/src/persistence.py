@@ -37,7 +37,7 @@ class Persistence(DataBase):
         for file in self._all_images():
             path = file['path']
             if path not in present_paths:
-                self._remove_image(path)
+                self._delete_image(path)
                 deleted += 1
 
         self._log(f'Sync summary: {total} total, {added} additions, '
@@ -127,7 +127,7 @@ class Persistence(DataBase):
 
         return id
 
-    def remove_image_everywhere(self, id: int) -> None:
+    def delete_image_everywhere(self, id: int) -> None:
         image = self._get_image_from_id(id)
         if image is None:
             self._error(404, 'Image not present.')
@@ -136,17 +136,17 @@ class Persistence(DataBase):
         print(f'Removing image {path}')
 
         # remove from database
-        self._remove_image(image['id'])
+        self._delete_image(image['id'])
         # remove from disk
         os.remove(path)
 
-    def remove_tag_everywhere(self, id: int) -> None:
+    def delete_tag_everywhere(self, id: int) -> None:
         tag = self._get_tag_from_id(id)
         if tag is None:
             self._error(404, 'Tag not present.')
 
         id = tag['id']
-        self._remove_tag(id)
+        self._delete_tag(id)
 
     def assign_tag(self, image_id: int, tag_id: int) -> None:
         image = self._get_image_from_id(image_id)

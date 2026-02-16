@@ -58,7 +58,7 @@ paths:
     delete:
       summary: Delete image
       description: Delete image from the database and the local files from its id.
-      operationId: remove_image_image__image_id__delete_delete
+      operationId: delete_image_image__image_id__delete_delete
       parameters:
         - name: image_id
           in: path
@@ -292,13 +292,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  '/tag/{tag_id}/remove':
+  '/tag/{tag_id}/delete':
     delete:
-      summary: Remove tag
+      summary: Delete tag
       description: >-
-        Remove tag from the database by id. Any assignation of it will be
+        Delete tag from the database by id. Any assignation of it will be
         discarded.
-      operationId: remove_tag_tag__tag_id__remove_delete
+      operationId: delete_tag_tag__tag_id__delete_delete
       parameters:
         - name: tag_id
           in: path

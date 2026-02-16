@@ -22,8 +22,8 @@ Image indexing and retrieval with CLIP.
 - `pip install -r requirements.txt`
 - Run `main.py` with Python3
 
-## Upcoming
+## Possible future improvements
 
 - Force local model
-- Rename media
+- Rename media, search by name?
 - Videos support

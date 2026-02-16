@@ -224,7 +224,7 @@ class DataBase:
         """)
         return self.cur.fetchall()
 
-    def _remove_image(self, id: int) -> None:
+    def _delete_image(self, id: int) -> None:
         self.cur.execute("""
         DELETE FROM images
         WHERE images.id = ?
@@ -235,7 +235,7 @@ class DataBase:
         """, [id])
         self.con.commit()
 
-    def _remove_tag(self, id: int) -> None:
+    def _delete_tag(self, id: int) -> None:
         self.cur.execute("""
         DELETE FROM tags
         WHERE tags.id = ?

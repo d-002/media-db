@@ -19,7 +19,7 @@ function globalTagClick(evt) {
     const eltType = evt.target.tagName.toUpperCase();
     if (eltType === "IMG") {
         // delete tag from database
-        const ok = confirm("Sure you want to delete this tag from the database?");
+        const ok = confirm("Really delete this tag?");
         if (!ok)
             return;
 
@@ -34,7 +34,7 @@ function globalTagClick(evt) {
 
 function currentTagClick(evt) {
     if (currentImage == null) {
-        alert("Please select an image first.");
+        alert("Please select media first.");
         return;
     }
 
@@ -122,7 +122,7 @@ function updateCurrentImage(image) {
 function updateRight() {
 }
 
-function getImages() {
+function filterImages() {
     const body = Object.keys(tagElts).filter(
         id => tagElts[id].global.classList.contains("selected"));
 
@@ -135,7 +135,7 @@ function getImages() {
 }
 
 function applyTagFilters() {
-    getImages();
+    filterImages();
 }
 
 function emptyTagFilters() {
@@ -193,10 +193,21 @@ function searchWithPrompt() {
 }
 
 function trashCurrent() {
+    const ok = confirm("Really delete this image?");
+    if (!ok)
+        return;
+    if (currentImage == null) {
+        alert("Please select media first.");
+        return;
+    }
+
+    httpDelete("/image/" + currentImage.id + "/delete", [], () => {
+        updateGlobalTags(filterImages);
+    });
 }
 
 function refreshAll() {
-    updateGlobalTags(getImages);
+    updateGlobalTags(filterImages);
 }
 
 Object.keys(elts).forEach(
