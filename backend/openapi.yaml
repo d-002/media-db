@@ -126,8 +126,8 @@ paths:
     post:
       summary: Add an image
       description: >-
-        Upload an image with its name, creation or modification date and raw
-        data to the database. The image is also written as a file.
+        Upload an image with its name, creation or modification timestamp and
+        raw data to the database. The image is also written as a file.
       operationId: add_image_images_new_post
       requestBody:
         content:
@@ -461,9 +461,9 @@ components:
         name:
           type: string
           title: Name
-        date:
+        timestamp:
           type: number
-          title: Date
+          title: Timestamp
         file:
           type: string
           format: binary
@@ -471,7 +471,7 @@ components:
       type: object
       required:
         - name
-        - date
+        - timestamp
         - file
       title: Body_add_image_images_new_post
     HTTPValidationError:

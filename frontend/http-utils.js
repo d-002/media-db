@@ -17,15 +17,21 @@ function httpGet(url, args, callback) {
     });
 }
 
-function httpPost(url, args, body, callback) {
-    fetch(backendUrl + url + formatArgs(args), {
+function httpPost(url, args, body, callback, isRaw = false) {
+    data = {
         method: "POST",
-        headers: {
+    };
+    if (isRaw)
+        data.body = body;
+    else {
+        data.body = body == null ? null : JSON.stringify(body);
+        data.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-        },
-        body: body == null ? null : JSON.stringify(body),
-    }).then(response => {
+        };
+    }
+
+    fetch(backendUrl + url + formatArgs(args), data).then(response => {
         if (response.ok)
             response.json().then(callback);
         else

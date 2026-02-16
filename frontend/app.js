@@ -5,11 +5,13 @@ const elts = {
     currentDate: "current-date",
     newTagName: "new-tag-name",
     content: null,
+    prompt: null,
 };
 
 let tagElts = []; // [tag id: {global element, current element}]
 
 const MAX_IMAGE_LENGTH = 30;
+const PROMPT_N_RESULTS = 50;
 
 let currentImage = null;
 
@@ -141,7 +143,7 @@ function emptyTagFilters() {
 }
 
 function createNewTag() {
-    name = elts.newTagName.value;
+    const name = encodeURIComponent(elts.newTagName.value);
     httpPost("/tags/new?tag_name=" + name, [], null, () => {
         updateGlobalTags();
         updateCurrentTags();
@@ -149,7 +151,51 @@ function createNewTag() {
     });
 }
 
-function start() {
+function uploadMedia() {
+    // no file type checks, this is completely safe trust :)
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.style = "width: 0; height: 0;"
+    document.body.appendChild(input);
+    input.click();
+    input.addEventListener("change", () => {
+        let count = 0;
+        const targetCount = input.files.length;
+
+        Array.from(input.files).forEach(file => {
+            const timestamp = new Date(file.lastModified).getTime() / 1000;
+
+            const formData = new FormData();
+            formData.append("name", file.name);
+            formData.append("timestamp", timestamp);
+            formData.append("file", file);
+            httpPost("/images/new", [], formData, () => {
+                if (++count < targetCount)
+                    return;
+
+                // all files have been uploaded
+                refreshAll();
+            }, true);
+        });
+
+        input.remove();
+    });
+}
+
+function searchWithPrompt() {
+    const prompt = encodeURIComponent(elts.prompt.value);
+    httpGet("/images/prompt?n=" + PROMPT_N_RESULTS + "&prompt=" + prompt, [], ids => {
+        console.log(ids);
+        elts.prompt.setAttribute("placeholder", elts.prompt.value);
+        elts.prompt.value = "";
+    });
+}
+
+function trashCurrent() {
+}
+
+function refreshAll() {
     updateGlobalTags(getImages);
 }
 
@@ -157,4 +203,4 @@ Object.keys(elts).forEach(
     key => elts[key] = document.getElementById(elts[key] == null ? key : elts[key]));
 elts.globalTags.addEventListener("click", globalTagClick);
 elts.currentTags.addEventListener("click", currentTagClick);
-start();
+refreshAll();

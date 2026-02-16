@@ -65,11 +65,11 @@ def setup_api(db_path: str, images_path: str,
     @app.post('/images/new',
               summary='Add an image',
               description='Upload an image with its name, creation or '
-                          'modification date and raw data to the database. '
-                          'The image is also written as a file.')
-    async def add_image(name: str = Form(...), date: float = Form(...),
+                          'modification timestamp and raw data to the '
+                          'database. The image is also written as a file.')
+    async def add_image(name: str = Form(...), timestamp: float = Form(...),
                         file: UploadFile = File(...)) -> dict[str, int]:
-        image_id = db.add_image_everywhere(name, date, file)
+        image_id = db.add_image_everywhere(name, timestamp, file)
         return {'image_id': image_id}
 
     @app.post('/images/filter',

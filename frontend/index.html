@@ -52,19 +52,19 @@
             </div>
 
             <div id="bar">
-                <a id="new-media" onclick="upload()" title="Upload media">
+                <a id="new-media" onclick="uploadMedia()" title="Upload media">
                     <img class="icon" src="images/plus.png">
                 </a>
 
-                <form action="javascript:search()">
+                <form action="javascript:searchWithPrompt()">
                     <input type="text" id="prompt" placeholder="Search with AI">
                 </form>
 
-                <a id="search" onclick="search()" title="Search with AI">
+                <a id="search" onclick="searchWithPrompt()" title="Search with AI">
                     <img class="icon" src="images/search.png">
                 </a>
 
-                <a id="trash" onclick="trash()" title="Delete media">
+                <a id="trash" onclick="trashCurrent()" title="Delete media">
                     <img class="icon" src="images/trash.png">
                 </a>
             </div>
