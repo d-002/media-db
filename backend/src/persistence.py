@@ -9,7 +9,7 @@ from .sql_wrapper import DataBase
 from .files import FilePath, list_files
 from .model import Model
 
-extensions = ['jpg', 'png', 'bmp', 'gif']
+extensions = ['jpg', 'jpeg', 'jfif', 'png', 'bmp', 'gif']
 
 def is_image(path: str) -> bool:
     ext = os.path.splitext(path)[-1].lower().strip()
@@ -133,7 +133,7 @@ class Persistence(DataBase):
                 return -1
             self._error(409, 'Tag already present.')
 
-        print(f'-> Adding new tag {name}')
+        print(f'-> Adding new tag \'{name}\'')
         id = self._add_tag(name)
         if id is None:
             self._error(500, 'Failed to create tag.')

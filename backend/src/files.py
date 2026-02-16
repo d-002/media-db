@@ -6,7 +6,7 @@ class FilePath:
         self.name = os.path.basename(path)
         self.path = path
 
-        for dir in os.path.split(path)[:-1]:
+        for dir in path.split(os.sep)[:-1]:
             if len(dir) > 0:
                 self.dirs.append(dir)
 
