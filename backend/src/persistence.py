@@ -3,6 +3,7 @@ import re
 import shutil
 import numpy as np
 from sys import stderr
+from datetime import datetime
 from fastapi import UploadFile, HTTPException
 
 from .sql_wrapper import DataBase
@@ -101,7 +102,11 @@ class Persistence(DataBase):
     def _new_image(self, file: FilePath, timestamp: float | None) -> int:
         print(f'-> Adding new image \'{file.path}\'.')
         if timestamp is None:
-            timestamp = os.path.getmtime(file.path)
+            try:
+                timestamp = os.path.getmtime(file.path)
+            except:
+                self._error(600, 'Failed to get file timestamp.')
+
         image_id = self._add_image(file.path, timestamp)
         if image_id is None:
             self._error(500, 'Failed to add image.')
@@ -109,8 +114,11 @@ class Persistence(DataBase):
         self._log('Generating tags for new image.')
         self._try_assign_tags(image_id)
 
-        self._log('Generating new tags from file path and assigning.')
-        for dirname in file.dirs:
+        dt = datetime.fromtimestamp(timestamp)
+        year = str(dt.year)
+        month = dt.strftime("%B")
+        self._log('Generating new tags from file path and date and assigning.')
+        for dirname in file.dirs + [year, month]:
             tag_id = self._get_tag_from_name(dirname)
             if tag_id is None:
                 tag_id = self.new_tag(dirname, True)
