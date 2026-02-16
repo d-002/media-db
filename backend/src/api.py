@@ -62,7 +62,7 @@ def setup_api(db_path: str, images_path: str,
     async def all_image_ids() -> list[int]:
         return db.all_image_ids()
 
-    @app.post('/images/add',
+    @app.post('/images/new',
               summary='Add an image',
               description='Upload an image with its name, creation or '
                           'modification date and raw data to the database. '
@@ -115,11 +115,11 @@ def setup_api(db_path: str, images_path: str,
     async def all_tags() -> list[dict]:
         return [db.safe_tag(tag) for tag in db.all_tags()]
 
-    @app.post('/tags/add/{tag_name}',
-              summary='Tag name from id',
-              description='Get the name of a tag from its id.')
+    @app.post('/tags/new',
+              summary='Create new tag',
+              description='Create a new tag with the specified name.')
     async def add_tag(tag_name: str) -> dict[str, int]:
-        tag_id = db.add_tag(tag_name)
+        tag_id = db.new_tag(tag_name)
         return {'tag_id': tag_id}
 
     @app.post('/assign/{image_id}/{tag_id}',

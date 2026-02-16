@@ -122,18 +122,18 @@ paths:
                   type: integer
                 type: array
                 title: Response All Image Ids Images List Ids Get
-  /images/add:
+  /images/new:
     post:
       summary: Add an image
       description: >-
         Upload an image with its name, creation or modification date and raw
         data to the database. The image is also written as a file.
-      operationId: add_image_images_add_post
+      operationId: add_image_images_new_post
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Body_add_image_images_add_post'
+              $ref: '#/components/schemas/Body_add_image_images_new_post'
         required: true
       responses:
         '200':
@@ -144,7 +144,7 @@ paths:
                 additionalProperties:
                   type: integer
                 type: object
-                title: Response Add Image Images Add Post
+                title: Response Add Image Images New Post
         '422':
           description: Validation Error
           content:
@@ -334,14 +334,14 @@ paths:
                   type: object
                 type: array
                 title: Response All Tags Tags List Get
-  '/tags/add/{tag_name}':
+  /tags/new:
     post:
-      summary: Tag name from id
-      description: Get the name of a tag from its id.
-      operationId: add_tag_tags_add__tag_name__post
+      summary: Create new tag
+      description: Create a new tag with the specified name.
+      operationId: add_tag_tags_new_post
       parameters:
         - name: tag_name
-          in: path
+          in: query
           required: true
           schema:
             type: string
@@ -355,7 +355,7 @@ paths:
                 type: object
                 additionalProperties:
                   type: integer
-                title: Response Add Tag Tags Add  Tag Name  Post
+                title: Response Add Tag Tags New Post
         '422':
           description: Validation Error
           content:
@@ -456,7 +456,7 @@ paths:
                 title: Response Sync Sync Get
 components:
   schemas:
-    Body_add_image_images_add_post:
+    Body_add_image_images_new_post:
       properties:
         name:
           type: string
@@ -473,7 +473,7 @@ components:
         - name
         - date
         - file
-      title: Body_add_image_images_add_post
+      title: Body_add_image_images_new_post
     HTTPValidationError:
       properties:
         detail:

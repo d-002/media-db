@@ -96,7 +96,7 @@ class Persistence(DataBase):
         for dirname in file.dirs:
             tag_id = self._get_tag_from_name(dirname)
             if tag_id is None:
-                tag_id = self.add_tag(dirname, True)
+                tag_id = self.new_tag(dirname, True)
             else:
                 tag_id = tag_id['id']
             self._assign_tag(image_id, tag_id)
@@ -104,7 +104,13 @@ class Persistence(DataBase):
         self._log()
         return image_id
 
-    def add_tag(self, name: str, silent: bool = False) -> int:
+    def new_tag(self, name: str, silent: bool = False) -> int:
+        # sanitize tag name
+        name = re.sub('[^\\w\\s\\-+=_!,;.\'"]+', '_', name)
+        name = name.strip()
+        if not name:
+            self._error(400, "Invalid tag name.");
+
         if self._get_tag_from_name(name) is not None:
             if silent:
                 return -1
