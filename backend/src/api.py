@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, Form, UploadFile, responses
+from fastapi.middleware.cors import CORSMiddleware
 
 from .model import Model
 from .persistence import Persistence
 
-def setup_api(db_path: str, images_path: str):
+def setup_api(db_path: str, images_path: str,
+              cross_origin: list[str] | None = None):
     model = Model()
     db = Persistence(db_path, images_path, model, verbose=True)
     db.sync()
@@ -17,6 +19,15 @@ def setup_api(db_path: str, images_path: str):
         print('Database connection closed.')
 
     app = FastAPI(lifespan=lifespan)
+
+    if cross_origin is not None:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cross_origin,
+            allow_credentials=True,
+            allow_methods=["*"], # Allows all methods (GET, POST, etc.)
+            allow_headers=["*"], # Allows all headers
+        )
 
     @app.get("/image/{image_id}/data")
     async def image_data_from_id(image_id: int):
