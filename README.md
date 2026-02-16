@@ -24,5 +24,6 @@ Image indexing and retrieval with CLIP.
 
 ## Upcoming
 
+- Force local model
 - Rename media
 - Videos support
