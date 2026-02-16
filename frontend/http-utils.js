@@ -24,7 +24,7 @@ function httpPost(url, args, body, callback) {
             "Content-Type": "application/json",
             "Accept": "application/json",
         },
-        body: JSON.stringify(body),
+        body: body == null ? null : JSON.stringify(body),
     }).then(response => {
         if (response.ok)
             response.json().then(callback);

@@ -13,27 +13,36 @@ const MAX_IMAGE_LENGTH = 30;
 let currentImage = null;
 
 function globalTagClick(evt) {
-    const tagName = evt.target.tagName.toUpperCase();
-    if (tagName === "IMG") {
+    const eltType = evt.target.tagName.toUpperCase();
+    if (eltType === "IMG") {
         // delete tag from database
         const ok = confirm("Sure you want to delete this tag from the database?");
         if (!ok)
             return;
 
-        const id = evt.target.parentNode.getAttribute("tag-id");
-        httpDelete("/tag/" + id + "/remove", [], fetchTags);
+        const tagId = evt.target.parentNode.getAttribute("tag-id");
+        httpDelete("/tag/" + tagId + "/remove", [], fetchTags);
     }
-    else if (tagName == "SPAN") {
+    else if (eltType == "SPAN") {
         // toggle tag
         evt.target.classList.toggle("selected");
     }
 }
 
 function currentTagClick(evt) {
-    const tagName = evt.target.tagName.toUpperCase();
-    if (tagName == "SPAN") {
-        evt.target.classList.toggle("selected");
-        // TODO
+    if (currentImage == null) {
+        alert("Please select an image first.");
+        return;
+    }
+
+    const eltType = evt.target.tagName.toUpperCase();
+    const tagId = evt.target.getAttribute("tag-id");
+
+    if (eltType == "SPAN") {
+        const selected = evt.target.classList.toggle("selected");
+        const action = selected ? "assign" : "unassign";
+
+        httpPost("/" + action + "/" + currentImage.id + "/" + tagId, [], null, null);
     }
 }
 
@@ -69,11 +78,11 @@ function fetchTags(callback) {
 function updateCurrentTags(image) {
     const callback = currentTags => {
         currentTagIds = currentTags.map(tag => tag.id);
-        Object.keys(tagElts).forEach(tag_id => {
-            tag_id = parseInt(tag_id);
-            const classList = tagElts[tag_id].current.classList;
+        Object.keys(tagElts).forEach(tagId => {
+            tagId = parseInt(tagId);
+            const classList = tagElts[tagId].current.classList;
 
-            if (currentTagIds.includes(tag_id))
+            if (currentTagIds.includes(tagId))
                 classList.add("selected");
             else
                 classList.remove("selected");
