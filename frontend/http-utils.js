@@ -1,6 +1,3 @@
-//const backendUrl = prompt("Enter the URL to the backend:");
-const backendUrl = "http://127.0.0.1:8000";
-
 function formatArgs(args) {
     return args.length ? "?" + args.join("&") : "";
 }

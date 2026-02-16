@@ -31,7 +31,5 @@ Image indexing and retrieval with CLIP.
 
 ## Possible future improvements
 
-- Frontend: improve backend selection with start menu, option to edit, saving preferences
-- Frontend: store tags, current image, search method in local storage
 - Backend: force local model
-- Videos support
+- Videos support?

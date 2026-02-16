@@ -505,4 +505,4 @@ elts.right.addEventListener("click", listClick);
 elts.right.addEventListener("scroll", listScroll);
 document.body.addEventListener("keydown", movement);
 
-updateGlobalTags(); // this will cascade update everything
+getBackendUrl(updateGlobalTags); // this will cascade update everything

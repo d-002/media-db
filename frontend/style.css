@@ -379,3 +379,37 @@ img#content {
 
     background-color: #ffffff1a;
 }
+
+/* popup */
+
+#backend-url-popup {
+    z-index: 2;
+    position: fixed;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    padding: 30%;
+
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+
+    font-size: 1.5rem;
+
+    background-color: #2b2a2d80;
+    backdrop-filter: blur(5px);
+}
+
+#backend-url-popup p {
+    text-align: center;
+}
+
+#backend-url-popup input {
+    font-size: 1.5rem;
+}

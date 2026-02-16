@@ -6,6 +6,15 @@
     </head>
 
     <body>
+        <div id="backend-url-popup" style="display: none">
+            <p>Enter the FULL url to the backend<br>(with the protocol):</p>
+            <form action="javascript:setBackendUrl()">
+                <input type="text" id="backend-url-input">
+                <input type="submit" value="Submit">
+            </form>
+            <p>This value will be stored in your local storage,<br>but you can always edit it from the dashboard.</p>
+        </div>
+
         <div id="left">
             <p>Global tags</p>
             <div id="global-tags" class="tags-container">
@@ -47,8 +56,12 @@
             </div>
 
             <div id="bar">
-                <a id="new-media" onclick="uploadMedia()" title="Upload media">
-                    <img class="icon" src="images/plus.png">
+                <a id="sync" onclick="syncDatabase()" title="Force sync database">
+                    <img class="icon" src="images/reload.png">
+                </a>
+
+                <a id="get-backend-url" onclick="askBackendUrl()" title="Change the URL to the backend">
+                    <img class="icon" src="images/web.png">
                 </a>
 
                 <form action="javascript:searchWithPrompt()">
@@ -59,12 +72,12 @@
                     <img class="icon" src="images/search.png">
                 </a>
 
-                <a id="trash" onclick="trashCurrent()" title="Delete media">
-                    <img class="icon" src="images/trash.png">
+                <a id="new-media" onclick="uploadMedia()" title="Upload media">
+                    <img class="icon" src="images/plus.png">
                 </a>
 
-                <a id="sync" onclick="syncDatabase()" title="Force sync database">
-                    <img class="icon" src="images/reload.png">
+                <a id="trash" onclick="trashCurrent()" title="Delete media">
+                    <img class="icon" src="images/trash.png">
                 </a>
             </div>
         </div>
@@ -74,6 +87,7 @@
         </div>
     </body>
 
+    <script src="backend-utils.js"></script>
     <script src="http-utils.js"></script>
     <script src="app.js"></script>
 </html>
