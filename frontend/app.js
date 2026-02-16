@@ -459,6 +459,19 @@ function listScroll() {
     }
 }
 
+function movement(evt) {
+    switch(evt.key) {
+        case "ArrowLeft":
+        case "ArrowUp":
+            prev();
+            break;
+        case "ArrowRight":
+        case "ArrowDown":
+            next();
+            break;
+    }
+}
+
 Object.keys(elts).forEach(
     key => elts[key] =
     document.getElementById(elts[key] == null ? key : elts[key]));
@@ -467,5 +480,6 @@ elts.globalTags.addEventListener("click", globalTagClick);
 elts.currentTags.addEventListener("click", currentTagClick);
 elts.right.addEventListener("click", listClick);
 elts.right.addEventListener("scroll", listScroll);
+document.body.addEventListener("keydown", movement);
 
 updateGlobalTags(); // this will cascade update everything
