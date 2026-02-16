@@ -39,7 +39,7 @@ class Persistence(DataBase):
         for i, file in enumerate(present):
             if not is_image(file.path):
                 self._log(f'Skipping {file.name}')
-                break
+                continue
 
             if self._get_image_from_path(file.path) is None:
                 self._new_image(file, None)
