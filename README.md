@@ -31,5 +31,4 @@ Image indexing and retrieval with CLIP.
 
 ## Possible future improvements
 
-- Backend: force local model
 - Videos support?

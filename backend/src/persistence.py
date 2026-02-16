@@ -34,6 +34,7 @@ class Persistence(DataBase):
 
         added = 0
         deleted = 0
+        failed = 0
 
         present = list_files(self.images_dir)
         total = len(present)
@@ -47,6 +48,7 @@ class Persistence(DataBase):
                     self._new_image(file, None)
                 except HTTPException:
                     print(f'Skipping \'{file.name}\' due to errors.')
+                    failed += 1
                     continue
                 added += 1
 
@@ -62,7 +64,8 @@ class Persistence(DataBase):
         self._log(f'Sync summary: {total} total, {added} additions, '
                   f'{deleted} deletions.')
 
-        return {'total': total, 'added': added, 'deleted': deleted}
+        return {'total': total, 'added': added, 'deleted': deleted,
+                'failed': failed}
 
     def all_image_ids(self) -> list[int]:
         return [image['id'] for image in self._all_images()]
