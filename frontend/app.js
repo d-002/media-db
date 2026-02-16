@@ -407,6 +407,9 @@ function syncDatabase() {
 }
 
 function listScroll() {
+    if (searchMethod == PROMPT)
+        return;
+
     if (elts.right.scrollTop <= 0) {
         searchAround(imageList[0].id, null);
     }
