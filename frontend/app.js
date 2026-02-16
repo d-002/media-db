@@ -23,6 +23,7 @@ let lastMove = RIGHT;
 let searchMethod = TAG_SEARCH;
 let prompt = "";
 let imageList = [];
+let lastScroll;
 
 function globalTagClick(evt) {
     const eltType = evt.target.tagName.toUpperCase();
@@ -203,19 +204,40 @@ function updateImageList(list) {
     });
 }
 
+function scrollToMid(elt) {
+    if (elt == null)
+        return false;
+
+    const midHeight = elt.getBoundingClientRect().top -
+        elts.right.getBoundingClientRect().top +
+        elt.offsetHeight / 2;
+    const target = document.body.offsetHeight / 2;
+
+    elts.right.scrollTop -= target - midHeight;
+    return true;
+}
+
 function updateImageInList() {
     const id = currentImage == null ? -1 : currentImage.id;
 
+    let elt = null;
+
+    // set selected image border
     Array.from(elts.right.children).forEach(div => {
         if (div.tagName.toUpperCase() != "DIV")
             return;
         const img = div.children[0];
 
-        if (img.getAttribute("image-id") == id + "")
+        if (img.getAttribute("image-id") == id + "") {
             img.classList.add("selected");
+            elt = img;
+        }
         else
             img.classList.remove("selected");
     });
+
+    // scroll to element
+    return scrollToMid(elt);
 }
 
 // update current image in a way that makes sense with the new search
@@ -407,15 +429,33 @@ function syncDatabase() {
 }
 
 function listScroll() {
+    const now = Date.now();
+    if (now - lastScroll < 500)
+        return;
+
     if (searchMethod == PROMPT)
         return;
 
-    if (elts.right.scrollTop <= 0) {
-        searchAround(imageList[0].id, null);
+    function callback() {
+        elts.right.innerHeight; // trigger reflow
+
+        // if auto scroll failed, the image is not in view: scroll to the middle
+        if (!updateImageInList()) {
+            elts.right.scrollTop = scrollMax / 2;
+        }
+
+        lastScroll = now;
     }
-    const scrollMax = elts.right.scrollHeight - elts.right.offsetHeight;
-    if (elts.right.scrollTop >= scrollMax) {
-        searchAround(imageList[imageList.length - 1].id, null);
+
+    const scroll = elts.right.scrollTop;
+    // -1 as threshold
+    const scrollMax = elts.right.scrollHeight - elts.right.offsetHeight - 1;
+
+    if (scroll <= 0) {
+        searchAround(imageList[0].id, callback);
+    }
+    if (scroll >= scrollMax) {
+        searchAround(imageList[imageList.length - 1].id, callback);
     }
 }
 
