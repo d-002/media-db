@@ -23,8 +23,8 @@ class DataBase:
         self.con.row_factory = sqlite3.Row
         self.cur = self.con.cursor()
 
-        self.reset_db()
-        #self._init_db()
+        #self.reset_db()
+        self._init_db()
 
         self._log()
 

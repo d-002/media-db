@@ -9,6 +9,15 @@ from .sql_wrapper import DataBase
 from .files import FilePath, list_files
 from .model import Model
 
+extensions = ['jpg', 'png', 'bmp', 'gif']
+
+def is_image(path: str) -> bool:
+    ext = os.path.splitext(path)[-1].lower().strip()
+    while ext.startswith('.'):
+        ext = ext[1:]
+
+    return len(ext) > 0 and ext in extensions
+
 class Persistence(DataBase):
     def __init__(self, db_file: str, images_dir: str, model: Model,
                  verbose: bool = False):
@@ -22,16 +31,21 @@ class Persistence(DataBase):
     def sync(self):
         self._log('Syncing images.')
 
-        total = 0
         added = 0
         deleted = 0
 
         present = list_files(self.images_dir)
-        for file in present:
+        total = len(present)
+        for i, file in enumerate(present):
+            if not is_image(file.path):
+                self._log(f'Skipping {file.name}')
+                break
+
             if self._get_image_from_path(file.path) is None:
                 self._new_image(file, None)
                 added += 1
-            total += 1
+
+            print(f'Indexing {(i + 1) / total * 100:.2f}% complete.')
 
         present_paths = [file.path for file in present]
         for file in self._all_images():
@@ -66,6 +80,9 @@ class Persistence(DataBase):
                              upload_file: UploadFile) -> int:
         if upload_file.filename is None:
             self._error(400, 'Incorrect file name.')
+
+        if not is_image(upload_file.filename):
+            self._error(400, 'File type is not supported.')
 
         # sanitize filename
         name = re.sub('[^\\w\\s\\-+=_!,;.\'"]+', '_', name)

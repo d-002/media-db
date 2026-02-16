@@ -334,7 +334,7 @@ function chooseDate() {
 
 function uploadMedia() {
     // no file type checks, this is completely safe trust :)
-    const input = document.createElement("INPUt");
+    const input = document.createElement("INPUT");
     input.type = "file";
     input.multiple = true;
     input.style = "width: 0; height: 0;"
@@ -396,7 +396,8 @@ function trashCurrent() {
 }
 
 function syncDatabase() {
-    const ok = confirm("Really force resync the database?");
+    const ok = confirm("Really force resync the database?\n" +
+        "This will take some time.");
     if (!ok)
         return;
 
