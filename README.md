@@ -22,9 +22,15 @@ Image indexing and retrieval with CLIP.
 - `pip install -r requirements.txt`
 - Run `main.py` with Python3
 
+## Runnign the frontend
+
+- Run or host the files in `frontend/`
+- Select the __full__ URL (including the protocol) to the backend.
+  You can change this later via a setting in the dashboard.
+- Press buttons idk
+
 ## Possible future improvements
 
-- Backend: add year, month as tags
 - Frontend: improve backend selection with start menu, option to edit, saving preferences
 - Frontend: store tags, current image, search method in local storage
 - Backend: force local model

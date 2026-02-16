@@ -34,7 +34,7 @@ function globalTagClick(evt) {
             return;
 
         const tagId = evt.target.parentNode.getAttribute("tag-id");
-        httpDelete("/tag/" + tagId + "/remove", [], updateGlobalTags);
+        httpDelete("/tag/" + tagId + "/delete", [], updateGlobalTags);
     }
     else if (eltType == "SPAN") {
         // toggle tag
@@ -436,8 +436,19 @@ function listScroll() {
     if (searchMethod == PROMPT)
         return;
 
+    prevIds = imageList.map(image => image.id);
+
     function callback() {
         elts.right.innerHeight; // trigger reflow
+
+        // check if anything changed, otherwise do nothing
+        let changed = false;
+        imageList.forEach(image => {
+            if (!prevIds.includes(image.id))
+                changed = true;
+        });
+        if (!changed)
+            return;
 
         // if auto scroll failed, the image is not in view: scroll to the middle
         if (!updateImageInList()) {
