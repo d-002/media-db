@@ -131,6 +131,7 @@ function updateCurrentImage(image) {
     if (image == null) {
         elts.content.src = "images/placeholder.png";
         elts.currentName.textContent = "No image selected.";
+        elts.currentName.title = "";
         elts.currentDate.textContent = "";
     }
     else {
@@ -138,8 +139,10 @@ function updateCurrentImage(image) {
         let name = image.path;
         if (name.length > MAX_IMAGE_LENGTH)
             name = "..." + name.substring(name.length - MAX_IMAGE_LENGTH + 3);
-        elts.currentName.textContent = name;
         const date = new Date(image.timestamp * 1000);
+
+        elts.currentName.textContent = name;
+        elts.currentName.title = image.path;
         elts.currentDate.textContent = date.toLocaleString();
     }
 
