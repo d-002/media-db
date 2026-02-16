@@ -1,14 +1,18 @@
 const elts = {
     globalTags: "global-tags",
     currentTags: "current-tags",
+    currentName: "current-name",
+    currentDate: "current-date",
     content: null,
 };
 
 const backendCache = {
-    globalTags: {}, // {id: {name: str, elt: span}}
+    globalTags: [], // {id: {tag, elt}}
 };
 
-let currentImageId = null;
+const MAX_IMAGE_LENGTH = 30;
+
+let currentImage = null;
 
 function globalTagClick(evt) {
     const tagName = evt.target.tagName.toUpperCase();
@@ -37,52 +41,41 @@ function currentTagClick(evt) {
 
 function fetchTags(callback) {
     httpGet("/tags/list", [], json => {
-        backendCache.globalTags = {};
+        backendCache.globalTags = [];
+        elts.globalTags.innerHTML = "";
 
-        let count = 0;
-        const targetCount = Object.keys(json.tag_ids).length;
-
-        // make a series of async calls and continue with the processing once
-        // the right number of them succeededd
-        json.tag_ids.forEach(id => {
-            httpGet("/tag/" + id + "/info", [], tag => {
-                backendCache.globalTags[id] = {name: tag["name"]};
-
-                if (++count < targetCount)
-                    return;
-
-                elts.globalTags.innerHTML = "";
-
-                Object.keys(backendCache.globalTags).sort((a, b) =>
-                    backendCache.globalTags[a].name.toLowerCase().localeCompare(
-                        backendCache.globalTags[b].name.toLowerCase()
-                    )
-                ).forEach(id => {
-                    const name = backendCache.globalTags[id].name;
-
-                    const span = document.createElement("span");
-                    span.textContent = name;
-                    span.innerHTML = span.textContent + `
-                    <img class="icon" src="images/cross.png" title="Delete tag">
-                    `;
-                    span.setAttribute("tag-id", id);
-                    span.className = "tag";
-                    elts.globalTags.appendChild(span);
-                    backendCache.globalTags[id].elt = span;
-                });
-
-                callback();
-            });
+        json.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())).forEach(tag => {
+            const span = document.createElement("span");
+            span.textContent = tag.name;
+            span.innerHTML = span.textContent + `
+            <img class="icon" src="images/cross.png" title="Delete tag">
+            `;
+            span.setAttribute("tag-id", tag.id);
+            span.className = "tag";
+            elts.globalTags.appendChild(span);
+            backendCache.globalTags[tag.id] = {tag: tag, elt: span};
         });
+
+        callback();
     });
 }
 
-function updateCurrentImage(id) {
-    currentImageId = id;
-    if (id == null)
+function updateCurrentImage(image) {
+    currentImage = image;
+    if (image == null) {
         elts.content.src = "images/placeholder.png";
-    else
-        elts.content.src = backendUrl + "/image/" + id + "/data";
+        elts.currentName.textContent = "No image selected.";
+        elts.currentDate.textContent = "";
+    }
+    else {
+        elts.content.src = backendUrl + "/image/" + image.id + "/data";
+        let name = image.path;
+        if (name.length > MAX_IMAGE_LENGTH)
+            name = "..." + name.substring(name.length - MAX_IMAGE_LENGTH + 3);
+        elts.currentName.textContent = name;
+        const date = new Date(image.timestamp * 1000);
+        elts.currentDate.textContent = date.toLocaleString();
+    }
 }
 
 function updateRight() {
@@ -93,12 +86,10 @@ function getImages() {
         id => backendCache.globalTags[id].elt.classList.contains("selected"));
 
     httpPost("/images/filter", [], body, json => {
-        console.log(json.image_ids);
-
-        if (json.image_ids.length === 0)
+        if (json.length === 0)
             updateCurrentImage(null);
-        else if (!json.image_ids.includes(currentImageId))
-            updateCurrentImage(json.image_ids[0]);
+        else if (!json.includes(currentImage))
+            updateCurrentImage(json[0]);
     });
 }
 

@@ -89,6 +89,9 @@ class Persistence(DataBase):
         if image_id is None:
             self._error(500, 'Failed to add image.')
 
+        self._log('Generating tags for new image.')
+        self._try_assign_tags(image_id)
+
         self._log('Generating new tags from file path and assigning.')
         for dirname in file.dirs:
             tag_id = self._get_tag_from_name(dirname)
@@ -97,9 +100,6 @@ class Persistence(DataBase):
             else:
                 tag_id = tag_id['id']
             self._assign_tag(image_id, tag_id)
-
-        self._log('Generating tags for new image.')
-        self._try_assign_tags(image_id)
 
         self._log()
         return image_id
@@ -119,7 +119,6 @@ class Persistence(DataBase):
         for image in self._all_images():
             self._try_assign_tags(image['id'])
 
-        self._log()
         return id
 
     def remove_image_everywhere(self, id: int) -> None:
