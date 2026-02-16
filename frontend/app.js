@@ -6,9 +6,7 @@ const elts = {
     content: null,
 };
 
-const backendCache = {
-    globalTags: [], // {id: {tag, elt}}
-};
+let tagElts = []; // [tag id: {global element, current element}]
 
 const MAX_IMAGE_LENGTH = 30;
 
@@ -41,23 +39,51 @@ function currentTagClick(evt) {
 
 function fetchTags(callback) {
     httpGet("/tags/list", [], json => {
-        backendCache.globalTags = [];
+        tagElts = [];
         elts.globalTags.innerHTML = "";
+        elts.currentTags.innerHTML = "";
 
         json.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())).forEach(tag => {
-            const span = document.createElement("span");
-            span.textContent = tag.name;
-            span.innerHTML = span.textContent + `
+            const globalSpan = document.createElement("span");
+            globalSpan.textContent = tag.name;
+            globalSpan.innerHTML = globalSpan.textContent + `
             <img class="icon" src="images/cross.png" title="Delete tag">
             `;
-            span.setAttribute("tag-id", tag.id);
-            span.className = "tag";
-            elts.globalTags.appendChild(span);
-            backendCache.globalTags[tag.id] = {tag: tag, elt: span};
+            globalSpan.setAttribute("tag-id", tag.id);
+            globalSpan.className = "tag";
+            elts.globalTags.appendChild(globalSpan);
+
+            const currentSpan = document.createElement("span");
+            currentSpan.textContent = tag.name;
+            currentSpan.setAttribute("tag-id", tag.id);
+            currentSpan.className = "tag";
+            elts.currentTags.appendChild(currentSpan);
+
+            tagElts[tag.id] = {global: globalSpan, current: currentSpan};
         });
 
         callback();
     });
+}
+
+function updateCurrentTags(image) {
+    const callback = currentTags => {
+        currentTagIds = currentTags.map(tag => tag.id);
+        Object.keys(tagElts).forEach(tag_id => {
+            tag_id = parseInt(tag_id);
+            const classList = tagElts[tag_id].current.classList;
+
+            if (currentTagIds.includes(tag_id))
+                classList.add("selected");
+            else
+                classList.remove("selected");
+        });
+    }
+
+    if (image == null)
+        callback([]);
+    else
+        httpGet("/image/" + image.id + "/tags", [], callback);
 }
 
 function updateCurrentImage(image) {
@@ -76,14 +102,16 @@ function updateCurrentImage(image) {
         const date = new Date(image.timestamp * 1000);
         elts.currentDate.textContent = date.toLocaleString();
     }
+
+    updateCurrentTags(image);
 }
 
 function updateRight() {
 }
 
 function getImages() {
-    const body = Object.keys(backendCache.globalTags).filter(
-        id => backendCache.globalTags[id].elt.classList.contains("selected"));
+    const body = Object.keys(tagElts).filter(
+        id => tagElts[id].global.classList.contains("selected"));
 
     httpPost("/images/filter", [], body, json => {
         if (json.length === 0)

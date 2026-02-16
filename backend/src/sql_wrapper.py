@@ -202,8 +202,7 @@ class DataBase:
     def get_image_tags(self, image_id: int) -> list[dict]:
         self.cur.execute("""
         SELECT DISTINCT
-            tags.id,
-            tags.name
+            tags.*
         FROM tags
         JOIN tags_join
         ON tags.id = tags_join.tag_id
