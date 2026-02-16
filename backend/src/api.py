@@ -73,16 +73,16 @@ def setup_api(db_path: str, images_path: str,
         return {'image_id': image_id}
 
     @app.post('/images/filter',
-              summary='Filter images with tags',
+              summary='Filter all images with tags',
               description='Get images id+name for all the images that are '
                           'associated with all the given tags.')
-    async def filter_images(tag_ids: list[int]) -> list[dict]:
-        return [db.safe_image(image) for image in db.filter_images(tag_ids)]
+    async def filter_all_images(tag_ids: list[int]) -> list[dict]:
+        return [db.safe_image(image) for image in db.filter_all_images(tag_ids)]
 
     @app.post('/images/around',
               summary='Get images around chronologically',
-              description='Get a list of n images chronologically closest to '
-                          'the target image.')
+              description='Get a list of 2n-1 images chronologically closest '
+                          'to the target image, n-1 before and after.')
     async def filter_around(image_id: int, tag_ids: list[int],
                             n: int) -> list[dict]:
         return [db.safe_image(image)

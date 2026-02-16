@@ -14,7 +14,7 @@ let tagElts = []; // {tag id: {global element, current element}, ...}
 
 const MAX_IMAGE_LENGTH = 30;
 const PROMPT_N_RESULTS = 50;
-const TAG_SEARCH_N_RESULTS = 50;
+const TAG_SEARCH_RADIUS = 10;
 const LEFT = 0, RIGHT = 1;
 const TAG_SEARCH = 0, PROMPT = 1;
 
@@ -146,12 +146,16 @@ function updateCurrentImage(image) {
     updateImageInList();
 }
 
-function sortList(list, targetTimestamp) {
+function sortList(list, targetTimestamp, useTimestampAbs) {
     // using lots of intermediaries for speed
     const values = list.map(
-        image => image.score == null ?
-            Math.abs(image.timestamp, targetTimestamp) :
-            -image.score);
+        image => {
+            if (image.score != null)
+                return -image.score;
+
+            const dt = image.timestamp - targetTimestamp;
+            return useTimestampAbs ? Math.abs(dt) : dt;
+        });
     let i = 0;
     const indices = list.map(_ => i++);
     const indicesSorted = indices.sort((i, j) => values[i] - values[j]);
@@ -165,7 +169,7 @@ function updateImageList(list) {
 
     elts.right.innerHTML = "";
 
-    imageList = sortList(list);
+    imageList = sortList(list, 0, false);
 
     if (imageList.length == 0) {
         const span = document.createElement("SPAN");
@@ -207,7 +211,7 @@ function updateImageInList() {
             return;
         const img = div.children[0];
 
-        if (img.getAttribute("image-id") == id)
+        if (img.getAttribute("image-id") == id + "")
             img.classList.add("selected");
         else
             img.classList.remove("selected");
@@ -222,9 +226,11 @@ function transitionCurrent() {
         return;
     }
 
-    // image already in list: do nothing
-    if (imageList.map(image => image.id).includes(currentImage.id))
+    // image already in list: just update selection in list
+    if (imageList.map(image => image.id).includes(currentImage.id)) {
+        updateImageInList();
         return;
+    }
 
     updateCurrentImage(imageList[0]);
 }
@@ -233,8 +239,13 @@ function applySearch() {
     if (searchMethod == TAG_SEARCH) {
         const body = Object.keys(tagElts).filter(
             id => tagElts[id].global.classList.contains("selected"));
+        console.log(body);
 
         httpPost("/images/filter", [], body, list => {
+            // trim list if needed, preferable around previous selected image
+            if (currentImage != null)
+                list = sortList(list, currentImage.timestamp, true)
+            list = list.slice(0, TAG_SEARCH_RADIUS);
             updateImageList(list);
             transitionCurrent();
         });
@@ -266,6 +277,18 @@ function createNewTag() {
     });
 }
 
+function searchAround(id, callback) {
+    const body = Object.keys(tagElts).filter(
+        id => tagElts[id].global.classList.contains("selected"));
+
+    httpPost("/images/around?image_id=" + id + "&n=" +
+        TAG_SEARCH_RADIUS, [], body, list => {
+            updateImageList(list);
+            if (callback != null)
+                callback();
+        });
+}
+
 // If there is an available image loaded, go to it, otherwise query surrounding
 // images to try to fetch the target one and call the function again.
 // fromPrev is there to avoid infinite loops in case the target doesn't exist.
@@ -279,19 +302,13 @@ function nextTo(direction, fromPrev = false) {
         return;
 
     if (target < 0 || target >= imageList.length) {
-        if (fromPrev)
+        if (fromPrev) {
+            updateImageInList();
             return;
-
-        if (searchMethod == TAG_SEARCH) {
-            const body = Object.keys(tagElts).filter(
-                id => tagElts[id].global.classList.contains("selected"));
-
-            httpPost("/images/around?image_id=" + currentImage.id + "&n=" +
-                TAG_SEARCH_N_RESULTS, [], body, list => {
-                    updateImageList(list);
-                    return nextTo(direction, true);
-                });
         }
+
+        if (searchMethod == TAG_SEARCH)
+            searchAround(currentImage.id, () => nextTo(direction, true));
         else
             return;
     }
@@ -305,6 +322,13 @@ function prev() {
 
 function next() {
     return nextTo(1);
+}
+
+function chooseDate() {
+    const timestamp = new Date(elts.date.value).getTime() / 1000;
+    httpGet("/images/date?timestamp=" + timestamp, [], image =>
+        around(image.id, () => updateCurrentImage(image))
+    );
 }
 
 function uploadMedia() {
@@ -380,24 +404,23 @@ function syncDatabase() {
     });
 }
 
-function chooseDate() {
-    const timestamp = new Date(elts.date.value).getTime() / 1000;
-    httpGet("/images/date?timestamp=" + timestamp, [], image => {
-        const body = Object.keys(tagElts).filter(
-            id => tagElts[id].global.classList.contains("selected"));
-
-        httpPost("/images/around?image_id=" + image.id + "&n=" +
-            TAG_SEARCH_N_RESULTS, [], body, list => {
-                updateImageList(list);
-                updateCurrentImage(image);
-            });
-    });
+function listScroll() {
+    if (elts.right.scrollTop <= 0) {
+        searchAround(imageList[0].id, null);
+    }
+    const scrollMax = elts.right.scrollHeight - elts.right.offsetHeight;
+    if (elts.right.scrollTop >= scrollMax) {
+        searchAround(imageList[imageList.length - 1].id, null);
+    }
 }
 
 Object.keys(elts).forEach(
     key => elts[key] =
     document.getElementById(elts[key] == null ? key : elts[key]));
+
 elts.globalTags.addEventListener("click", globalTagClick);
 elts.currentTags.addEventListener("click", currentTagClick);
 elts.right.addEventListener("click", listClick);
+elts.right.addEventListener("scroll", listScroll);
+
 updateGlobalTags(); // this will cascade update everything

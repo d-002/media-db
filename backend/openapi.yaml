@@ -153,11 +153,11 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
   /images/filter:
     post:
-      summary: Filter images with tags
+      summary: Filter all images with tags
       description: >-
         Get images id+name for all the images that are associated with all the
         given tags.
-      operationId: filter_images_images_filter_post
+      operationId: filter_all_images_images_filter_post
       requestBody:
         content:
           application/json:
@@ -177,7 +177,7 @@ paths:
                   additionalProperties: true
                   type: object
                 type: array
-                title: Response Filter Images Images Filter Post
+                title: Response Filter All Images Images Filter Post
         '422':
           description: Validation Error
           content:
@@ -187,7 +187,9 @@ paths:
   /images/around:
     post:
       summary: Get images around chronologically
-      description: Get a list of n images chronologically closest to the target image.
+      description: >-
+        Get a list of 2n-1 images chronologically closest to the target image,
+        n-1 before and after.
       operationId: filter_around_images_around_post
       parameters:
         - name: image_id

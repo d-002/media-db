@@ -196,4 +196,7 @@ class Persistence(DataBase):
         if image is None:
             self._error(404, 'Image not present.')
 
-        return self._filter_around(image['timestamp'], tag_ids, n)
+        before = self._filter_around(image['timestamp'], tag_ids, n, False)
+        after = self._filter_around(image['timestamp'], tag_ids, n, True)
+
+        return before + after[1:]

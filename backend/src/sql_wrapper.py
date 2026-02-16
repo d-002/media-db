@@ -247,7 +247,7 @@ class DataBase:
         """, [id])
         self.con.commit()
 
-    def filter_images(self, tag_ids: list[int]) -> list[dict]:
+    def filter_all_images(self, tag_ids: list[int]) -> list[dict]:
         if not tag_ids:
             return self._all_images()
 
@@ -266,12 +266,21 @@ class DataBase:
         return self.cur.fetchall()
 
     def _filter_around(self, timestamp: float, tag_ids: list[int],
-                       n: int) -> list[dict]:
+                       n: int, search_after: bool) -> list[dict]:
+        if search_after:
+            comp = '>='
+            order = 'ASC'
+        else:
+            comp = '<='
+            order = 'DESC'
+
         if not tag_ids:
-            self.cur.execute("""
-                SELECT *, ABS(timestamp - ?) AS distance
-                FROM images
-                ORDER BY distance ASC LIMIT ?
+            self.cur.execute(f"""
+            SELECT images.*
+            FROM images
+            WHERE images.timestamp {comp} ?
+            ORDER BY images.timestamp {order}
+            LIMIT ?
             """, [timestamp, n])
             return self.cur.fetchall()
 
@@ -279,16 +288,15 @@ class DataBase:
         placeholders = ', '.join(['?'] * num_tags)
 
         self.cur.execute(f"""
-        SELECT
-            images.*,
-            ABS(images.timestamp - ?) AS distance
+        SELECT images.*
         FROM images
         JOIN tags_join
         ON images.id = tags_join.image_id
         WHERE tags_join.tag_id IN ({placeholders})
+        AND images.timestamp {comp} ?
         GROUP BY images.id
         HAVING COUNT(DISTINCT tags_join.tag_id) = ?
-        ORDER BY distance ASC
+        ORDER BY images.timestamp {order}
         LIMIT ?
         """, [timestamp] + tag_ids + [n])
         return self.cur.fetchall()
