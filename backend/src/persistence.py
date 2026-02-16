@@ -96,9 +96,12 @@ class Persistence(DataBase):
 
         self._log('Generating new tags from file path and assigning.')
         for dirname in file.dirs:
-            if dirname not in self.all_tags():
+            tag_id = self._get_tag_from_name(dirname)
+            if tag_id is None:
                 tag_id = self.add_tag(dirname, True)
-                self._assign_tag(image_id, tag_id)
+            else:
+                tag_id = tag_id['id']
+            self._assign_tag(image_id, tag_id)
 
         self._log('Generating tags for new image.')
         self._try_assign_tags(image_id)

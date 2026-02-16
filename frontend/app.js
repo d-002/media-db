@@ -1,14 +1,14 @@
 const elts = {
     globalTags: "global-tags",
     currentTags: "current-tags",
+    content: null,
 };
 
 const backendCache = {
     globalTags: {}, // {id: {name: str, elt: span}}
 };
 
-const imageCache = new ImageCache();
-let displayedImageId = null;
+let currentImageId = null;
 
 function globalTagClick(evt) {
     const tagName = evt.target.tagName.toUpperCase();
@@ -79,7 +79,10 @@ function fetchTags(callback) {
 
 function updateCurrentImage(id) {
     currentImageId = id;
-    elts.
+    if (id == null)
+        elts.content.src = "images/placeholder.png";
+    else
+        elts.content.src = backendUrl + "/image/" + id + "/data";
 }
 
 function updateRight() {
@@ -90,14 +93,12 @@ function getImages() {
         id => backendCache.globalTags[id].elt.classList.contains("selected"));
 
     httpPost("/images/filter", [], body, json => {
-        if (json.image_ids.length === 0)
-            elts.content.src = "images/placeholder.png";
-        else if (!json.image_ids.contains(currentImageId))
-            updateCurrentImage(json.image_ids[0]);
+        console.log(json.image_ids);
 
-        json.image_ids.forEach(id => {
-            imageCache.get(id, 
-        });
+        if (json.image_ids.length === 0)
+            updateCurrentImage(null);
+        else if (!json.image_ids.includes(currentImageId))
+            updateCurrentImage(json.image_ids[0]);
     });
 }
 
@@ -109,15 +110,12 @@ function emptyTagFilters() {
     Array.from(elts.globalTags.children).forEach(elt => elt.classList.remove("selected"));
 }
 
-function clearTagFilters() {
-    Array.from(elts.globalTags.children).forEach(elt => elt.classList.add("selected"));
-}
-
 function start() {
     fetchTags(getImages);
 }
 
-Object.keys(elts).forEach(key => elts[key] = document.getElementById(elts[key]));
+Object.keys(elts).forEach(
+    key => elts[key] = document.getElementById(elts[key] == null ? key : elts[key]));
 elts.globalTags.addEventListener("click", globalTagClick);
 elts.currentTags.addEventListener("click", currentTagClick);
 start();
