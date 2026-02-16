@@ -473,11 +473,18 @@ function listScroll() {
 }
 
 function movement(evt) {
+    if (evt.target.tagName.toUpperCase() == "INPUT")
+        return;
+
     switch(evt.key) {
+        case "h":
+        case "k":
         case "ArrowLeft":
         case "ArrowUp":
             prev();
             break;
+        case "l":
+        case "j":
         case "ArrowRight":
         case "ArrowDown":
             next();
