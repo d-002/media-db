@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, File, Form, UploadFile, responses
+from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .model import Model
@@ -16,7 +17,6 @@ def setup_api(db_path: str, images_path: str,
         yield
 
         db.close()
-        print('Database connection closed.')
 
     app = FastAPI(lifespan=lifespan)
 
@@ -25,87 +25,127 @@ def setup_api(db_path: str, images_path: str,
             CORSMiddleware,
             allow_origins=cross_origin,
             allow_credentials=True,
-            allow_methods=["*"], # Allows all methods (GET, POST, etc.)
-            allow_headers=["*"], # Allows all headers
+            allow_methods=['*'],
+            allow_headers=['*'],
         )
 
-    @app.get("/image/{image_id}/data")
-    async def image_data_from_id(image_id: int):
+    @app.get('/image/{image_id}/data',
+             summary='Get image data',
+             description='Retrieve an image\'s data from its id.')
+    async def image_data_from_id(image_id: int) -> FileResponse:
         res = db.get_image_path_for_data(image_id)
-        return responses.FileResponse(res)
+        return FileResponse(res)
 
-    @app.get("/image/{image_id}/info")
-    async def image_info_from_id(image_id: int):
-        return db.image_info_from_id(image_id)
+    @app.get('/image/{image_id}/info',
+             summary='Get image info',
+             description='Retrieve image id, name and timestamp from its id.')
+    async def image_info_from_id(image_id: int) -> dict:
+        return db.safe_image(db.image_info_from_id(image_id))
 
-    @app.delete("/image/{image_id}/delete")
-    async def remove_image(image_id: int):
+    @app.delete('/image/{image_id}/delete',
+                summary='Delete image',
+                description='Delete image from the database and the local '
+                            'files from its id.')
+    async def remove_image(image_id: int) -> None:
         db.remove_image_everywhere(image_id)
 
-    @app.get("/image/{image_id}/tags")
-    async def get_image_tags(image_id: int):
-        tag_ids = db.get_image_tags(image_id)
-        return {'tag_ids': tag_ids}
+    @app.get('/image/{image_id}/tags',
+             summary='Get image tags',
+             description='Get a list of all the target image\'s tags id+name.')
+    async def get_image_tags(image_id: int) -> list[dict]:
+        return [db.safe_tag(tag) for tag in db.get_image_tags(image_id)]
 
-    @app.get("/images/list")
-    async def all_images():
-        image_ids = db.all_images()
-        return {'image_ids': image_ids}
+    @app.get('/images/list-ids',
+             summary='Get all image ids',
+             description='Get a list with the ids of all the images in the '
+                         'database.')
+    async def all_image_ids() -> list[int]:
+        return db.all_image_ids()
 
-    @app.post("/images/add")
-    async def add_image(path: str = Form(...), date: float = Form(...),
-                        file: UploadFile = File(...)):
-        image_id = db.add_image_everywhere(path, date, file)
+    @app.post('/images/add',
+              summary='Add an image',
+              description='Upload an image with its name, creation or '
+                          'modification date and raw data to the database. '
+                          'The image is also written as a file.')
+    async def add_image(name: str = Form(...), date: float = Form(...),
+                        file: UploadFile = File(...)) -> dict[str, int]:
+        image_id = db.add_image_everywhere(name, date, file)
         return {'image_id': image_id}
 
-    @app.post("/images/filter")
-    async def filter_images(tag_ids: list[int]):
-        image_ids = db.filter_images(tag_ids)
-        return {'image_ids': image_ids}
+    @app.post('/images/filter',
+              summary='Filter images with tags',
+              description='Get images id+name for all the images that are '
+                          'associated with all the given tags.')
+    async def filter_images(tag_ids: list[int]) -> list[dict]:
+        return [db.safe_image(image) for image in db.filter_images(tag_ids)]
 
-    @app.post("/images/around")
-    async def filter_around(image_id: int, tag_ids: list[int], n: int):
-        image_ids = db.filter_around(image_id, tag_ids, n)
-        return {'image_ids': image_ids}
+    @app.post('/images/around',
+              summary='Get images around chronologically',
+              description='Get a list of n images chronologically closest to '
+                          'the target image.')
+    async def filter_around(image_id: int, tag_ids: list[int],
+                            n: int) -> list[dict]:
+        return [db.safe_image(image)
+                for image in db.filter_around(image_id, tag_ids, n)]
 
-    @app.get("/images/date")
-    async def closest_to_date(timestamp: int):
-        image_id = db.closest_to_date(timestamp)
-        return {'image_id': image_id}
+    @app.get('/images/date',
+             summary='Get closest image to timestamp',
+             description='Get the image whose date is the closest to the given '
+                     'timestamp.')
+    async def closest_to_date(timestamp: int) -> dict:
+        return db.safe_image(db.closest_to_date(timestamp))
 
-    @app.get("/images/best")
-    async def prompt_n_best(prompt: str, n: int):
-        image_ids = db.prompt_n_best(prompt, n)
-        return {'image_ids': image_ids}
+    @app.get('/images/prompt',
+             summary='Prompt matching images with AI',
+             description='Match images inside the database whose embeddings '
+                         'match that of the supplied prompt.')
+    async def prompt_n_best(prompt: str, n: int) -> list[dict]:
+        return [db.safe_image(image) for image in db.prompt_n_best(prompt, n)]
 
-    @app.get("/tag/{tag_id}/info")
-    async def tag_info_from_id(tag_id: int):
-        return db.tag_info_from_id(tag_id)
-
-    @app.delete("/tag/{tag_id}/remove")
-    async def remove_tag(tag_id: int):
+    @app.delete('/tag/{tag_id}/remove',
+                summary='Remove tag',
+                description='Remove tag from the database by id. '
+                            'Any assignation of it will be discarded.')
+    async def remove_tag(tag_id: int) -> None:
         db.remove_tag_everywhere(tag_id)
 
-    @app.get("/tags/list")
-    async def all_tags():
-        tag_ids = db.all_tags()
-        return {'tag_ids': tag_ids}
+    @app.get('/tags/list',
+             summary='List tags',
+             description='Get a list of id+name for all the tags.')
+    async def all_tags() -> list[dict]:
+        return [db.safe_tag(tag) for tag in db.all_tags()]
 
-    @app.post("/tags/add/{tag_name}")
-    async def add_tag(tag_name: str):
+    @app.post('/tags/add/{tag_name}',
+              summary='Tag name from id',
+              description='Get the name of a tag from its id.')
+    async def add_tag(tag_name: str) -> dict[str, int]:
         tag_id = db.add_tag(tag_name)
         return {'tag_id': tag_id}
 
-    @app.post("/assign/{image_id}/{tag_id}")
-    async def assign(image_id: int, tag_id: int):
+    @app.post('/assign/{image_id}/{tag_id}',
+              summary='Assign tag to image',
+              description='Assign a tag to an image. Both must be present.')
+    async def assign(image_id: int, tag_id: int) -> None:
         db.assign_tag(image_id, tag_id)
 
-    @app.post("/unassign/{image_id}/{tag_id}")
-    async def unassign(image_id: int, tag_id: int):
+    @app.post('/unassign/{image_id}/{tag_id}',
+              summary='Unassign tag',
+              description='Unassign a tag to an image.')
+    async def unassign(image_id: int, tag_id: int) -> None:
         db.unassign_tag(image_id, tag_id)
 
-    @app.delete("/empty")
-    async def reset():
+    @app.delete('/reset',
+                summary='Reset database',
+                description='Reset the entire database and parse images from '
+                            'disk again with the set of default tags.')
+    async def reset() -> dict[str, int]:
         db.reset_db()
+        return db.sync()
+
+    @app.get('/sync',
+             summary='Sync database',
+             description='Sync the database for added image files.')
+    async def sync() -> dict[str, int]:
+        return db.sync()
 
     return app

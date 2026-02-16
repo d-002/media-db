@@ -43,26 +43,24 @@ class Persistence(DataBase):
         self._log(f'Sync summary: {total} total, {added} additions, '
                   f'{deleted} deletions.')
 
-    def all_images(self) -> list[int]:
+        return {'total': total, 'added': added, 'deleted': deleted}
+
+    def all_image_ids(self) -> list[int]:
         return [image['id'] for image in self._all_images()]
 
-    def all_tags(self) -> list[int]:
-        return [tag['id'] for tag in self._all_tags()]
+    def safe_image(self, image: dict) -> dict:
+        return {'id': image['id'], 'path': image['path'],
+                 'timestamp': image['timestamp']}
+
+    def safe_tag(self, tag: dict) -> dict:
+        return {'id': tag['id'], 'name': tag['name']}
 
     def image_info_from_id(self, id: int) -> dict:
         image = self._get_image_from_id(id)
         if image is None:
             self._error(404, 'Image not found.')
 
-        return {'id': image['id'], 'path': image['path'],
-                'timestamp': image['timestamp']}
-
-    def tag_info_from_id(self, id: int) -> dict:
-        tag = self._get_tag_from_id(id)
-        if tag is None:
-            self._error(404, 'Tag not found.')
-
-        return {'id': tag['id'], 'name': tag['name']}
+        return image
 
     def add_image_everywhere(self, name: str, timestamp: float,
                              upload_file: UploadFile) -> int:
@@ -80,13 +78,10 @@ class Persistence(DataBase):
         os.utime(path, (timestamp, timestamp))
 
         # add to database
-        file = FilePath(upload_file.filename)
+        file = FilePath(path)
         return self._new_image(file, timestamp)
 
     def _new_image(self, file: FilePath, timestamp: float | None) -> int:
-        if self._get_image_from_path(file.path) is not None:
-            self._error(409, f'{file.path} already present.')
-
         print(f'-> Adding new image \'{file.path}\'.')
         if timestamp is None:
             timestamp = os.path.getmtime(file.path)
@@ -121,8 +116,8 @@ class Persistence(DataBase):
             self._error(500, 'Failed to create tag.')
 
         self._log('Updating tags for all images.')
-        for image_id in self.all_images():
-            self._try_assign_tags(image_id)
+        for image in self._all_images():
+            self._try_assign_tags(image['id'])
 
         self._log()
         return id
@@ -179,29 +174,21 @@ class Persistence(DataBase):
 
         return image['path']
 
-    def prompt_n_best(self, prompt: str, n: int) -> list[int]:
-        l: list[tuple[int, float]] = []
+    def prompt_n_best(self, prompt: str, n: int) -> list[dict]:
+        l: list[tuple[dict, float]] = []
         prompt_embedding = self.model.embed_text(prompt)
 
         for image in self._all_images():
             img_embedding = np.frombuffer(image['embedding'], dtype=np.float32)
             score = self.model.sim_score(img_embedding, prompt_embedding)[0]
-            l.append((image['id'], score))
+            l.append((image, score))
 
         return list(map(lambda t: t[0], sorted(l, key=lambda t: -t[1])[:n]))
 
-    def filter_images(self, tag_ids: list[int]) -> list[int]:
-        images = self._filter_images(tag_ids)
-        return [image['id'] for image in images]
-
     def filter_around(self, image_id: int, tag_ids: list[int],
-                      n: int) -> list[int]:
+                      n: int) -> list[dict]:
         image = self._get_image_from_id(image_id)
         if image is None:
             self._error(404, 'Image not present.')
 
-        filtered = self._filter_around(image['timestamp'], tag_ids, n)
-        return [res['id'] for res in filtered]
-
-    def closest_to_date(self, timestamp: float) -> int:
-        return self._closest_to_date(timestamp)['id']
+        return self._filter_around(image['timestamp'], tag_ids, n)

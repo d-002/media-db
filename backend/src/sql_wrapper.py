@@ -185,7 +185,7 @@ class DataBase:
         assigned_tags = self.cur.fetchall()
         assigned_tag_ids = [tag['id'] for tag in assigned_tags]
 
-        for tag in self._all_tags():
+        for tag in self.all_tags():
             tag_id = tag['id']
             if tag_id in assigned_tag_ids:
                 continue
@@ -199,15 +199,17 @@ class DataBase:
                 self._log(f'- Adding tag {tag['name']} ({int(score * 100)}%).')
                 self._assign_tag(img_id, tag_id)
 
-    def get_image_tags(self, image_id: int) -> list[int]:
+    def get_image_tags(self, image_id: int) -> list[dict]:
         self.cur.execute("""
-        SELECT DISTINCT tags.id
+        SELECT DISTINCT
+            tags.id,
+            tags.name
         FROM tags
         JOIN tags_join
         ON tags.id = tags_join.tag_id
         WHERE tags_join.image_id = ?
         """, [image_id])
-        return [tag['id'] for tag in self.cur.fetchall()]
+        return self.cur.fetchall()
 
     def _all_images(self) -> list[dict]:
         self.cur.execute("""
@@ -216,7 +218,7 @@ class DataBase:
         """)
         return self.cur.fetchall()
 
-    def _all_tags(self) -> list[dict]:
+    def all_tags(self) -> list[dict]:
         self.cur.execute("""
         SELECT tags.*
         FROM tags
@@ -245,7 +247,7 @@ class DataBase:
         """, [id])
         self.con.commit()
 
-    def _filter_images(self, tag_ids: list[int]) -> list[dict]:
+    def filter_images(self, tag_ids: list[int]) -> list[dict]:
         if not tag_ids:
             return self._all_images()
 
@@ -253,7 +255,7 @@ class DataBase:
         placeholders = ', '.join(['?'] * num_tags)
 
         self.cur.execute(f"""
-        SELECT images.id
+        SELECT images.*
         FROM images
         JOIN tags_join
         ON images.id = tags_join.image_id
@@ -269,7 +271,7 @@ class DataBase:
 
         self.cur.execute(f"""
         SELECT DISTINCT
-            images.id,
+            images.*,
             ABS(images.timestamp - ?) AS distance
         FROM images
         JOIN tags_join
@@ -277,13 +279,13 @@ class DataBase:
         WHERE tags_join.tag_id in ({placeholders})
         ORDER BY distance ASC
         LIMIT ?
-        """, [timestamp, n])
+        """, [timestamp] + tag_ids + [n])
         return self.cur.fetchall()
 
-    def _closest_to_date(self, timestamp: float) -> dict:
+    def closest_to_date(self, timestamp: float) -> dict:
         self.cur.execute("""
         SELECT
-            images.id,
+            images.*,
             ABS(images.timestamp - ?) AS distance
         FROM images
         ORDER BY distance ASC

@@ -24,7 +24,6 @@ Image indexing and retrieval with CLIP.
 
 ## Upcoming
 
-- Optimize number of requests: add time to images list, name to tags list?
 - Force local model
 - Rename media
 - Videos support

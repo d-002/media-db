@@ -1,0 +1,511 @@
+openapi: 3.1.0
+info:
+  title: FastAPI
+  version: 0.1.0
+paths:
+  '/image/{image_id}/data':
+    get:
+      summary: Get image data
+      description: Retrieve an image's data from its id.
+      operationId: image_data_from_id_image__image_id__data_get
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Image Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/image/{image_id}/info':
+    get:
+      summary: Get image info
+      description: 'Retrieve image id, name and timestamp from its id.'
+      operationId: image_info_from_id_image__image_id__info_get
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Image Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Image Info From Id Image  Image Id  Info Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/image/{image_id}/delete':
+    delete:
+      summary: Delete image
+      description: Delete image from the database and the local files from its id.
+      operationId: remove_image_image__image_id__delete_delete
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Image Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/image/{image_id}/tags':
+    get:
+      summary: Get image tags
+      description: Get a list of all the target image's tags id+name.
+      operationId: get_image_tags_image__image_id__tags_get
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Image Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                title: Response Get Image Tags Image  Image Id  Tags Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /images/list-ids:
+    get:
+      summary: Get all image ids
+      description: Get a list with the ids of all the images in the database.
+      operationId: all_image_ids_images_list_ids_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  type: integer
+                type: array
+                title: Response All Image Ids Images List Ids Get
+  /images/add:
+    post:
+      summary: Add an image
+      description: >-
+        Upload an image with its name, creation or modification date and raw
+        data to the database. The image is also written as a file.
+      operationId: add_image_images_add_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_add_image_images_add_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: integer
+                type: object
+                title: Response Add Image Images Add Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /images/filter:
+    post:
+      summary: Filter images with tags
+      description: >-
+        Get images id+name for all the images that are associated with all the
+        given tags.
+      operationId: filter_images_images_filter_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                type: integer
+              type: array
+              title: Tag Ids
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+                title: Response Filter Images Images Filter Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /images/around:
+    post:
+      summary: Get images around chronologically
+      description: Get a list of n images chronologically closest to the target image.
+      operationId: filter_around_images_around_post
+      parameters:
+        - name: image_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            title: Image Id
+        - name: 'n'
+          in: query
+          required: true
+          schema:
+            type: integer
+            title: 'N'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              title: Tag Ids
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                title: Response Filter Around Images Around Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /images/date:
+    get:
+      summary: Get closest image to timestamp
+      description: Get the image whose date is the closest to the given timestamp.
+      operationId: closest_to_date_images_date_get
+      parameters:
+        - name: timestamp
+          in: query
+          required: true
+          schema:
+            type: integer
+            title: Timestamp
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Closest To Date Images Date Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /images/prompt:
+    get:
+      summary: Prompt matching images with AI
+      description: >-
+        Match images inside the database whose embeddings match that of the
+        supplied prompt.
+      operationId: prompt_n_best_images_prompt_get
+      parameters:
+        - name: prompt
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Prompt
+        - name: 'n'
+          in: query
+          required: true
+          schema:
+            type: integer
+            title: 'N'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                title: Response Prompt N Best Images Prompt Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/tag/{tag_id}/remove':
+    delete:
+      summary: Remove tag
+      description: >-
+        Remove tag from the database by id. Any assignation of it will be
+        discarded.
+      operationId: remove_tag_tag__tag_id__remove_delete
+      parameters:
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Tag Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /tags/list:
+    get:
+      summary: List tags
+      description: Get a list of id+name for all the tags.
+      operationId: all_tags_tags_list_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+                title: Response All Tags Tags List Get
+  '/tags/add/{tag_name}':
+    post:
+      summary: Tag name from id
+      description: Get the name of a tag from its id.
+      operationId: add_tag_tags_add__tag_name__post
+      parameters:
+        - name: tag_name
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Tag Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+                title: Response Add Tag Tags Add  Tag Name  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/assign/{image_id}/{tag_id}':
+    post:
+      summary: Assign tag to image
+      description: Assign a tag to an image. Both must be present.
+      operationId: assign_assign__image_id___tag_id__post
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Image Id
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Tag Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/unassign/{image_id}/{tag_id}':
+    post:
+      summary: Unassign tag
+      description: Unassign a tag to an image.
+      operationId: unassign_unassign__image_id___tag_id__post
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Image Id
+        - name: tag_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Tag Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /reset:
+    delete:
+      summary: Reset database
+      description: >-
+        Reset the entire database and parse images from disk again with the set
+        of default tags.
+      operationId: reset_reset_delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: integer
+                type: object
+                title: Response Reset Reset Delete
+  /sync:
+    get:
+      summary: Sync database
+      description: Sync the database for added image files.
+      operationId: sync_sync_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: integer
+                type: object
+                title: Response Sync Sync Get
+components:
+  schemas:
+    Body_add_image_images_add_post:
+      properties:
+        name:
+          type: string
+          title: Name
+        date:
+          type: number
+          title: Date
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+        - name
+        - date
+        - file
+      title: Body_add_image_images_add_post
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
