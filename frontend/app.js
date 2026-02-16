@@ -239,7 +239,6 @@ function applySearch() {
     if (searchMethod == TAG_SEARCH) {
         const body = Object.keys(tagElts).filter(
             id => tagElts[id].global.classList.contains("selected"));
-        console.log(body);
 
         httpPost("/images/filter", [], body, list => {
             // trim list if needed, preferable around previous selected image
@@ -317,10 +316,12 @@ function nextTo(direction, fromPrev = false) {
 }
 
 function prev() {
+    lastMove = LEFT;
     return nextTo(-1);
 }
 
 function next() {
+    lastMove = RIGHT;
     return nextTo(1);
 }
 
