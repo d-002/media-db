@@ -4,16 +4,24 @@ const elts = {
     currentName: "current-name",
     currentDate: "current-date",
     newTagName: "new-tag-name",
+    right: null,
     content: null,
     prompt: null,
 };
 
-let tagElts = []; // [tag id: {global element, current element}]
+let tagElts = []; // {tag id: {global element, current element}, ...}
 
 const MAX_IMAGE_LENGTH = 30;
 const PROMPT_N_RESULTS = 50;
+const TAG_SEARCH_N_RESULTS = 50;
+const LEFT = 0, RIGHT = 1;
+const TAG_SEARCH = 0, PROMPT = 1;
 
 let currentImage = null;
+let lastMove = RIGHT;
+let searchMethod = TAG_SEARCH;
+let prompt = "";
+let imageList = [];
 
 function globalTagClick(evt) {
     const eltType = evt.target.tagName.toUpperCase();
@@ -45,37 +53,40 @@ function currentTagClick(evt) {
         const selected = evt.target.classList.toggle("selected");
         const action = selected ? "assign" : "unassign";
 
-        httpPost("/" + action + "/" + currentImage.id + "/" + tagId, [], null, null);
+        httpPost("/" + action + "/" + currentImage.id + "/" + tagId,
+            [], null, null);
     }
 }
 
-function updateGlobalTags(callback) {
+function updateGlobalTags() {
     httpGet("/tags/list", [], json => {
         tagElts = [];
         elts.globalTags.innerHTML = "";
         elts.currentTags.innerHTML = "";
 
-        json.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())).forEach(tag => {
-            const globalSpan = document.createElement("span");
-            globalSpan.textContent = tag.name;
-            globalSpan.innerHTML = globalSpan.textContent + `
-            <img class="icon" src="images/cross.png" title="Delete tag">
-            `;
-            globalSpan.setAttribute("tag-id", tag.id);
-            globalSpan.className = "tag";
-            elts.globalTags.appendChild(globalSpan);
+        json.sort((a, b) => a.name.toLowerCase().localeCompare(
+            b.name.toLowerCase())).forEach(tag => {
 
-            const currentSpan = document.createElement("span");
-            currentSpan.textContent = tag.name;
-            currentSpan.setAttribute("tag-id", tag.id);
-            currentSpan.className = "tag";
-            elts.currentTags.appendChild(currentSpan);
+                const globalSpan = document.createElement("SPAN");
+                globalSpan.textContent = tag.name;
+                globalSpan.innerHTML = globalSpan.textContent + `
+                <img class="icon" src="images/cross.png" title="Delete tag">
+                `;
+                globalSpan.setAttribute("tag-id", tag.id);
+                globalSpan.className = "tag";
+                elts.globalTags.appendChild(globalSpan);
 
-            tagElts[tag.id] = {global: globalSpan, current: currentSpan};
-        });
+                const currentSpan = document.createElement("SPAN");
+                currentSpan.textContent = tag.name;
+                currentSpan.setAttribute("tag-id", tag.id);
+                currentSpan.className = "tag";
+                elts.currentTags.appendChild(currentSpan);
 
-        if (callback != null)
-            callback();
+                tagElts[tag.id] = {global: globalSpan, current: currentSpan};
+            });
+
+        searchMethod = TAG_SEARCH;
+        applySearch();
     });
 }
 
@@ -119,41 +130,141 @@ function updateCurrentImage(image) {
     updateCurrentTags(image);
 }
 
-function updateRight() {
+function sortList(list, targetTimestamp) {
+    // using lots of intermediaries for speed
+    const values = list.map(
+        image => image.score == null ?
+            Math.abs(image.timestamp, targetTimestamp) :
+            -image.score);
+    let i = 0;
+    const indices = list.map(_ => i++);
+    const indicesSorted = indices.sort((i, j) => values[i] - values[j]);
+    return indicesSorted.map(i => list[i]);
 }
 
-function filterImages() {
-    const body = Object.keys(tagElts).filter(
-        id => tagElts[id].global.classList.contains("selected"));
+function updateImageList(list) {
+    // Add separators when this value changes significantly:
+    // - tag search: every day
+    // - prompt search: every 5% probability
 
-    httpPost("/images/filter", [], body, json => {
-        if (json.length === 0)
-            updateCurrentImage(null);
-        else if (!json.includes(currentImage))
-            updateCurrentImage(json[0]);
+    elts.right.innerHTML = "";
+
+    imageList = sortList(list);
+
+    if (imageList.length == 0) {
+        const span = document.createElement("SPAN");
+        span.className = "separator";
+        span.textContent = "No media.";
+        elts.right.appendChild(span);
+        return;
+    }
+
+    let prevValue = null;
+    imageList.forEach(image => {
+        const value = searchMethod == TAG_SEARCH ?
+            Math.floor(image.timestamp / 86400) * 86400000 :
+            Math.floor(image.score * 20) * 5;
+
+        if (value != prevValue) {
+            const span = document.createElement("SPAN");
+            span.className = "separator";
+            span.textContent = searchMethod == TAG_SEARCH ?
+                new Date(value).toLocaleDateString() :
+                value + "% confidence";
+            elts.right.appendChild(span);
+
+            prevValue = value;
+        }
+
+        const img = document.createElement("IMG");
+        img.src = backendUrl + "/image/" + image.id + "/data";
+        elts.right.appendChild(img);
     });
 }
 
+// update current image in a way that makes sense with the new search
+function transitionCurrent() {
+    //updateCurrentImage();
+}
+
+function applySearch() {
+    if (searchMethod == TAG_SEARCH) {
+        const body = Object.keys(tagElts).filter(
+            id => tagElts[id].global.classList.contains("selected"));
+
+        httpPost("/images/filter", [], body, list => {
+            updateImageList(list);
+            transitionCurrent();
+        });
+    }
+    else if (searchMethod == PROMPT) {
+        httpGet("/images/prompt?n=" + PROMPT_N_RESULTS + "&prompt=" + prompt,
+            [], list => {
+                updateImageList(list);
+                transitionCurrent();
+            });
+    }
+}
+
 function applyTagFilters() {
-    filterImages();
+    searchMethod = TAG_SEARCH;
+    applySearch();
 }
 
 function emptyTagFilters() {
-    Array.from(elts.globalTags.children).forEach(elt => elt.classList.remove("selected"));
+    Array.from(elts.globalTags.children).forEach(
+        elt => elt.classList.remove("selected"));
 }
 
 function createNewTag() {
     const name = encodeURIComponent(elts.newTagName.value);
     httpPost("/tags/new?tag_name=" + name, [], null, () => {
-        updateGlobalTags();
-        updateCurrentTags();
         elts.newTagName.value = "";
+        updateGlobalTags();
     });
+}
+
+// If there is an available image loaded, go to it, otherwise query surrounding
+// images to try to fetch the target one and call the function again.
+// fromPrev is there to avoid infinite loops in case the target doesn't exist.
+function nextTo(direction, fromPrev = false) {
+    if (currentImage == null)
+        return;
+
+    const index = imageList.map(i => i[0].id).indexOf(currentImage.id);
+    if (index == -1)
+        return;
+
+    const target = index + direction;
+    if (index < 0 || index >= imageList.length) {
+        if (fromPrev)
+            return;
+
+        if (searchMethod == TAG_SEARCH) {
+            httpGet("/images/around?image_id=" + currentImage.id + "&n=" +
+                TAG_SEARCH_N_RESULTS, [], list => {
+                    updateImageList(list);
+                    return nextTo(direction, true);
+                });
+        }
+        else
+            return;
+    }
+    else
+        updateCurrentImage(imageList[target]);
+}
+
+function prev() {
+    return nextTo(-1);
+}
+
+function next() {
+    return nextTo(1);
 }
 
 function uploadMedia() {
     // no file type checks, this is completely safe trust :)
-    const input = document.createElement("input");
+    const input = document.createElement("INPUt");
     input.type = "file";
     input.multiple = true;
     input.style = "width: 0; height: 0;"
@@ -184,12 +295,17 @@ function uploadMedia() {
 }
 
 function searchWithPrompt() {
-    const prompt = encodeURIComponent(elts.prompt.value);
-    httpGet("/images/prompt?n=" + PROMPT_N_RESULTS + "&prompt=" + prompt, [], ids => {
-        console.log(ids);
-        elts.prompt.setAttribute("placeholder", elts.prompt.value);
-        elts.prompt.value = "";
-    });
+    const value = elts.prompt.value.trim();
+    if (value.length === 0)
+        return;
+
+    prompt = encodeURIComponent(elts.prompt.value);
+    elts.prompt.setAttribute("placeholder", value);
+    elts.prompt.value = "";
+
+    currentImage = null; // force select the best match in upcoming transition
+    searchMethod = PROMPT;
+    applySearch();
 }
 
 function trashCurrent() {
@@ -202,16 +318,16 @@ function trashCurrent() {
     }
 
     httpDelete("/image/" + currentImage.id + "/delete", [], () => {
-        updateGlobalTags(filterImages);
+        if (lastMove == RIGHT)
+            next();
+        else
+            prev();
     });
 }
 
-function refreshAll() {
-    updateGlobalTags(filterImages);
-}
-
 Object.keys(elts).forEach(
-    key => elts[key] = document.getElementById(elts[key] == null ? key : elts[key]));
+    key => elts[key] =
+    document.getElementById(elts[key] == null ? key : elts[key]));
 elts.globalTags.addEventListener("click", globalTagClick);
 elts.currentTags.addEventListener("click", currentTagClick);
-refreshAll();
+updateGlobalTags(); // this will cascade update everything

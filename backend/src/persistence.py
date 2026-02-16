@@ -174,21 +174,22 @@ class Persistence(DataBase):
 
     def get_image_path_for_data(self, image_id: int) -> str:
         image = self._get_image_from_id(image_id)
+        print(image_id, image)
         if image is None:
             self._error(404, 'Image not present.')
 
         return image['path']
 
-    def prompt_n_best(self, prompt: str, n: int) -> list[dict]:
-        l: list[tuple[dict, float]] = []
+    def prompt_n_best(self, prompt: str, n: int) -> list[tuple[float, dict]]:
+        l = []
         prompt_embedding = self.model.embed_text(prompt)
 
         for image in self._all_images():
             img_embedding = np.frombuffer(image['embedding'], dtype=np.float32)
             score = self.model.sim_score(img_embedding, prompt_embedding)[0]
-            l.append((image, score))
+            l.append((float(score), image))
 
-        return list(map(lambda t: t[0], sorted(l, key=lambda t: -t[1])[:n]))
+        return sorted(l, key=lambda t: -t[0])[:n]
 
     def filter_around(self, image_id: int, tag_ids: list[int],
                       n: int) -> list[dict]:

@@ -214,6 +214,7 @@ class DataBase:
         self.cur.execute("""
         SELECT images.*
         FROM images
+        ORDER BY images.timestamp DESC
         """)
         return self.cur.fetchall()
 

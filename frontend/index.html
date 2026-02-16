@@ -16,22 +16,17 @@
                 <a onclick="emptyTagFilters()">Clear filters</a>
             </div>
 
+            <form id="new-tag" action="javascript:createNewTag()">
+                <input type="text" id="new-tag-name" placeholder="New tag name">
+                <input type="submit" value="Create">
+            </form>
+
             <p id="current-name">Media name</p>
             <p id="current-date">Media date</p>
 
             <p>Current image tags</p>
             <div id="current-tags" class="tags-container">
-                <span class="tag selected">Lorem ipsum</span>
-                <span class="tag selected">Lorem ipsum</span>
-                <span class="tag">Lorem ipsum</span>
-                <span class="tag">Lorem ipsum</span>
-                <span class="tag">Lorem ipsum</span>
             </div>
-
-            <form id="new-tag" action="javascript:createNewTag()">
-                <input type="text" id="new-tag-name">
-                <input type="submit" value="Create">
-            </form>
 
             <form id="date-picker" action="javascript:chooseDate()">
                 <input type="date" id="date">
@@ -41,7 +36,7 @@
 
         <div id="center">
             <div id="content-container">
-                <div class="action" id="action-previous" onclick="previous()" title="Previous">
+                <div class="action" id="action-prev" onclick="prev()" title="Previous">
                     <img class="icon" src="images/prev.png">
                 </div>
                 <div class="action" id="action-next" onclick="next()" title="Next">
@@ -71,23 +66,7 @@
         </div>
 
         <div id="right">
-            <div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png" class="selected"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <span class="day-separator">New day separator</span>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-                <div><img src="images/placeholder.png"></div>
-            </div>
+            <span class="separator">No media.</span>
         </div>
     </body>
 

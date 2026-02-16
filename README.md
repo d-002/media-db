@@ -24,6 +24,8 @@ Image indexing and retrieval with CLIP.
 
 ## Possible future improvements
 
-- Force local model
-- Rename media, search by name?
+- Backend: add year, month as tags
+- Frontend: improve backend selection with start menu, option to edit, saving preferences
+- Frontend: store tags, current image, search method in local storage
+- Backend: force local model
 - Videos support

@@ -100,7 +100,8 @@ def setup_api(db_path: str, images_path: str,
              description='Match images inside the database whose embeddings '
                          'match that of the supplied prompt.')
     async def prompt_n_best(prompt: str, n: int) -> list[dict]:
-        return [db.safe_image(image) for image in db.prompt_n_best(prompt, n)]
+        return [{'score': score, **db.safe_image(image)}
+                for score, image in db.prompt_n_best(prompt, n)]
 
     @app.delete('/tag/{tag_id}/delete',
                 summary='Delete tag',
