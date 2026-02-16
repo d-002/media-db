@@ -267,16 +267,27 @@ class DataBase:
 
     def _filter_around(self, timestamp: float, tag_ids: list[int],
                        n: int) -> list[dict]:
-        placeholders = ', '.join(['?'] * len(tag_ids))
+        if not tag_ids:
+            self.cur.execute("""
+                SELECT *, ABS(timestamp - ?) AS distance
+                FROM images
+                ORDER BY distance ASC LIMIT ?
+            """, [timestamp, n])
+            return self.cur.fetchall()
+
+        num_tags = len(tag_ids)
+        placeholders = ', '.join(['?'] * num_tags)
 
         self.cur.execute(f"""
-        SELECT DISTINCT
+        SELECT
             images.*,
             ABS(images.timestamp - ?) AS distance
         FROM images
         JOIN tags_join
         ON images.id = tags_join.image_id
-        WHERE tags_join.tag_id in ({placeholders})
+        WHERE tags_join.tag_id IN ({placeholders})
+        GROUP BY images.id
+        HAVING COUNT(DISTINCT tags_join.tag_id) = ?
         ORDER BY distance ASC
         LIMIT ?
         """, [timestamp] + tag_ids + [n])

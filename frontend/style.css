@@ -316,6 +316,11 @@ img#content {
     height: fit-content;
 }
 
+#right>div {
+    position: relative;
+    display: inline-flex;
+}
+
 #right img {
     cursor: pointer;
 
@@ -325,12 +330,7 @@ img#content {
     box-shadow: 0 0 10px #00000040;
 }
 
-#right>div>div {
-    position: relative;
-    display: inline-flex;
-}
-
-#right>div>div:is(:hover, :has(img.selected)):after {
+#right>div:is(:hover, :has(img.selected)):after {
     content: "";
     pointer-events: none;
 
@@ -346,11 +346,11 @@ img#content {
     border-radius: .6em;
 }
 
-#right>div>div:has(img.selected):after {
+#right>div:has(img.selected):after {
     border: .3em solid #c18e30;
 }
 
-#right>div>div:hover:after {
+#right>div:hover:after {
     border: .3em solid #7b705c;
 }
 

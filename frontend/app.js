@@ -58,6 +58,20 @@ function currentTagClick(evt) {
     }
 }
 
+function findImageById(id) {
+    return imageList.filter(image => image.id == id)[0];
+}
+
+function listClick(evt) {
+    const eltType = evt.target.tagName.toUpperCase();
+    const imageId = evt.target.getAttribute("image-id");
+
+    if (eltType != "IMG")
+        return;
+
+    updateCurrentImage(findImageById(imageId));
+}
+
 function updateGlobalTags() {
     httpGet("/tags/list", [], json => {
         tagElts = [];
@@ -128,6 +142,7 @@ function updateCurrentImage(image) {
     }
 
     updateCurrentTags(image);
+    updateImageInList();
 }
 
 function sortList(list, targetTimestamp) {
@@ -176,15 +191,41 @@ function updateImageList(list) {
             prevValue = value;
         }
 
-        const img = document.createElement("IMG");
-        img.src = backendUrl + "/image/" + image.id + "/data";
-        elts.right.appendChild(img);
+        const div = document.createElement("DIV");
+        div.innerHTML = '<img src="' + backendUrl + "/image/" + image.id +
+            '/data" image-id="' + image.id + '">';
+        elts.right.appendChild(div);
+    });
+}
+
+function updateImageInList() {
+    const id = currentImage == null ? -1 : currentImage.id;
+
+    Array.from(elts.right.children).forEach(div => {
+        if (div.tagName.toUpperCase() != "DIV")
+            return;
+        const img = div.children[0];
+
+        if (img.getAttribute("image-id") == id)
+            img.classList.add("selected");
+        else
+            img.classList.remove("selected");
     });
 }
 
 // update current image in a way that makes sense with the new search
 function transitionCurrent() {
-    //updateCurrentImage();
+    // no image selected: select the "best" one
+    if (currentImage == null) {
+        updateCurrentImage(imageList[0]);
+        return;
+    }
+
+    // image already in list: do nothing
+    if (imageList.map(image => image.id).includes(currentImage.id))
+        return;
+
+    updateCurrentImage(imageList[0]);
 }
 
 function applySearch() {
@@ -231,18 +272,21 @@ function nextTo(direction, fromPrev = false) {
     if (currentImage == null)
         return;
 
-    const index = imageList.map(i => i[0].id).indexOf(currentImage.id);
+    const index = imageList.map(i => i.id).indexOf(currentImage.id);
+    const target = index + direction;
     if (index == -1)
         return;
 
-    const target = index + direction;
-    if (index < 0 || index >= imageList.length) {
+    if (target < 0 || target >= imageList.length) {
         if (fromPrev)
             return;
 
         if (searchMethod == TAG_SEARCH) {
-            httpGet("/images/around?image_id=" + currentImage.id + "&n=" +
-                TAG_SEARCH_N_RESULTS, [], list => {
+            const body = Object.keys(tagElts).filter(
+                id => tagElts[id].global.classList.contains("selected"));
+
+            httpPost("/images/around?image_id=" + currentImage.id + "&n=" +
+                TAG_SEARCH_N_RESULTS, [], body, list => {
                     updateImageList(list);
                     return nextTo(direction, true);
                 });
@@ -330,4 +374,5 @@ Object.keys(elts).forEach(
     document.getElementById(elts[key] == null ? key : elts[key]));
 elts.globalTags.addEventListener("click", globalTagClick);
 elts.currentTags.addEventListener("click", currentTagClick);
+elts.right.addEventListener("click", listClick);
 updateGlobalTags(); // this will cascade update everything

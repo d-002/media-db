@@ -174,7 +174,6 @@ class Persistence(DataBase):
 
     def get_image_path_for_data(self, image_id: int) -> str:
         image = self._get_image_from_id(image_id)
-        print(image_id, image)
         if image is None:
             self._error(404, 'Image not present.')
 
