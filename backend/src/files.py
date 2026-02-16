@@ -20,7 +20,7 @@ def list_files(path) -> set[FilePath]:
         full = os.path.join(path, f)
 
         if os.path.isdir(full):
-            l.union(list_files(full))
+            l = l.union(list_files(full))
         else:
             l.add(FilePath(full))
 
