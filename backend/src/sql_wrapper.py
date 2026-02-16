@@ -298,7 +298,7 @@ class DataBase:
         HAVING COUNT(DISTINCT tags_join.tag_id) = ?
         ORDER BY images.timestamp {order}
         LIMIT ?
-        """, [timestamp] + tag_ids + [n])
+        """, tag_ids + [timestamp, num_tags, n])
         return self.cur.fetchall()
 
     def closest_to_date(self, timestamp: float) -> dict:

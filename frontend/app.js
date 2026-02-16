@@ -430,10 +430,12 @@ function syncDatabase() {
 
 function listScroll() {
     const now = Date.now();
+
     if (now - lastScroll < 500)
         return;
-
     if (searchMethod == PROMPT)
+        return;
+    if (imageList.length == 0)
         return;
 
     prevIds = imageList.map(image => image.id);
