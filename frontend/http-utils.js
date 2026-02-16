@@ -17,11 +17,14 @@ function httpGet(url, args, callback) {
     });
 }
 
-function httpPost(url, callback, args, body) {
+function httpPost(url, args, body, callback) {
     fetch(backendUrl + url + formatArgs(args), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: body,
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        body: JSON.stringify(body),
     }).then(response => {
         if (response.ok)
             response.json().then(callback);

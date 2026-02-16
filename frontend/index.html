@@ -12,8 +12,9 @@
             </div>
 
             <div class="buttons-flex">
-                <a onclick="applyTagFilters()">Filter media</a>
-                <a onclick="clearTagFilters()">Clear filters</a>
+                <a onclick="applyTagFilters()">Refresh</a>
+                <a onclick="emptyTagFilters()">Unselect</a>
+                <a onclick="clearTagFilters()">Select</a>
             </div>
 
             <p id="current-name">Media name</p>
@@ -92,5 +93,6 @@
     </body>
 
     <script src="http-utils.js"></script>
+    <script src="image-cache.js"></script>
     <script src="app.js"></script>
 </html>
