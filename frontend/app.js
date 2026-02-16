@@ -7,6 +7,7 @@ const elts = {
     right: null,
     content: null,
     prompt: null,
+    date: null,
 };
 
 let tagElts = []; // {tag id: {global element, current element}, ...}
@@ -366,6 +367,20 @@ function trashCurrent() {
             next();
         else
             prev();
+    });
+}
+
+function chooseDate() {
+    const timestamp = new Date(elts.date.value).getTime() / 1000;
+    httpGet("/images/date?timestamp=" + timestamp, [], image => {
+        const body = Object.keys(tagElts).filter(
+            id => tagElts[id].global.classList.contains("selected"));
+
+        httpPost("/images/around?image_id=" + image.id + "&n=" +
+            TAG_SEARCH_N_RESULTS, [], body, list => {
+                updateImageList(list);
+                updateCurrentImage(image);
+            });
     });
 }
 
