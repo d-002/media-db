@@ -353,7 +353,7 @@ function next() {
 function chooseDate() {
     const timestamp = new Date(elts.date.value).getTime() / 1000;
     httpGet("/images/date?timestamp=" + timestamp, [], image =>
-        around(image.id, () => updateCurrentImage(image))
+        searchAround(image.id, () => updateCurrentImage(image))
     );
 }
 
