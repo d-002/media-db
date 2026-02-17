@@ -1,5 +1,11 @@
-const backendUrlPopup = document.getElementById("backend-url-popup");
-const backendUrlInput = document.getElementById("backend-url-input");
+const backendElts = {
+    popup: "backend-url-popup",
+    error: "backend-url-error",
+    input: "backend-url-input",
+};
+Object.keys(backendElts).forEach(
+    key => backendElts[key] =
+    document.getElementById(backendElts[key] == null ? key : backendElts[key]));
 
 let backendUrl;
 let onSetUrl = null;
@@ -15,9 +21,10 @@ function getBackendUrl(callback) {
         callback();
 }
 
-function askBackendUrl() {
-    backendUrlPopup.style = "";
-    backendUrlInput.placeholder = backendUrl == null ?
+function askBackendUrl(error) {
+    backendElts.popup.style = "";
+    backendElts.error.textContent = error == null ? "" : error;
+    backendElts.input.placeholder = backendUrl == null ?
         "Ex: http://127.0.0.1:8000" :
         backendUrl;
 
@@ -25,11 +32,11 @@ function askBackendUrl() {
 }
 
 function setBackendUrl() {
-    backendUrl = backendUrlInput.value;
-    localStorage.setItem("backend-url", backendUrlInput.value);
+    backendUrl = backendElts.input.value;
+    localStorage.setItem("backend-url", backendElts.input.value);
 
     if (onSetUrl != null)
         onSetUrl();
 
-    backendUrlPopup.style = "display: none";
+    backendElts.popup.style = "display: none";
 }

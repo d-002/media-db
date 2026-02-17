@@ -11,7 +11,7 @@ function httpGet(url, args, callback) {
             response.json().then(callback);
         else
             alert("Error: " + response.statusText);
-    });
+    }).catch(askBackendUrl);
 }
 
 function httpPost(url, args, body, callback, isRaw = false) {
@@ -33,7 +33,7 @@ function httpPost(url, args, body, callback, isRaw = false) {
             response.json().then(callback);
         else
             alert("Error: " + response.statusText);
-    });
+    }).catch(askBackendUrl);
 }
 
 function httpDelete(url, args, callback) {
@@ -44,5 +44,5 @@ function httpDelete(url, args, callback) {
             response.json().then(callback);
         else
             alert("Error: " + response.statusText);
-    });
+    }).catch(askBackendUrl);
 }

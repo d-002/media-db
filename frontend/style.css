@@ -413,3 +413,7 @@ img#content {
 #backend-url-popup input {
     font-size: 1.5rem;
 }
+
+#backend-url-error {
+    color: #f5613e;
+}
