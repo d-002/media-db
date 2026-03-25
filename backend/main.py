@@ -1,3 +1,4 @@
+import os
 from src.api import setup_api
 
 origins = [
@@ -6,5 +7,9 @@ origins = [
 ]
 
 db_path = 'db.db'
-images_path = '/mnt/nas/PHOTOS'
+images_path = os.getenv('IMAGES_PATH')
+if not images_path or not os.path.isdir(images_path):
+    print('Please provide a valid IMAGES_PATH environment variable')
+    exit(1)
+
 app = setup_api(db_path, images_path, origins)
