@@ -6,10 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from .model import Model
 from .persistence import Persistence
 
-def setup_api(db_path: str, images_path: str,
+def setup_api(db_path: str, images_path: str, verbose: bool = False,
               cross_origin: list[str] | None = None):
     model = Model()
-    db = Persistence(db_path, images_path, model, verbose=True)
+    db = Persistence(db_path, images_path, model, verbose=verbose)
     db.sync()
 
     @asynccontextmanager
@@ -120,7 +120,7 @@ def setup_api(db_path: str, images_path: str,
               summary='Create new tag',
               description='Create a new tag with the specified name.')
     async def add_tag(tag_name: str) -> dict[str, int]:
-        tag_id = db.new_tag(tag_name)
+        tag_id = db.new_tag(tag_name, False)
         return {'tag_id': tag_id}
 
     @app.post('/assign/{image_id}/{tag_id}',

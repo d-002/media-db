@@ -54,6 +54,7 @@ class DataBase:
         self.cur.execute("""
         CREATE TABLE IF NOT EXISTS tags (
             id INTEGER PRIMARY KEY,
+            is_dirname INTEGER,
             name TEXT,
             embedding BLOB
         )
@@ -74,9 +75,7 @@ class DataBase:
             self._log('Adding basic tags because there are none.')
 
             for tag in DataBase.basic_tags:
-                self._add_tag(tag)
-
-            self._add_tag('minecraft')
+                self._add_tag(tag, False)
 
     def reset_db(self) -> None:
         self._log('Resetting database.')
@@ -130,13 +129,13 @@ class DataBase:
 
         return self.cur.lastrowid
 
-    def _add_tag(self, name: str) -> int | None:
+    def _add_tag(self, name: str, is_dirname: bool) -> int | None:
         embedding = self.model.embed_text(name)
         embedding_blob = embedding.tobytes()
 
         self.cur.execute("""
         INSERT INTO tags (name, embedding)
-        VALUES (?, ?)""", [name, embedding_blob])
+        VALUES (?, ?, ?)""", [name, is_dirname, embedding_blob])
         self.con.commit()
 
         return self.cur.lastrowid
@@ -183,7 +182,9 @@ class DataBase:
         WHERE tags_join.image_id = ?
         """, [img_id])
         assigned_tags = self.cur.fetchall()
-        assigned_tag_ids = [tag['id'] for tag in assigned_tags]
+        assigned_tag_ids = [tag['id']
+                            for tag in assigned_tags
+                            if not tag['is_dirname']]
 
         for tag in self.all_tags():
             tag_id = tag['id']

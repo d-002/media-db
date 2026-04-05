@@ -131,7 +131,7 @@ class Persistence(DataBase):
         for dirname in file.dirs + [year, month]:
             tag_id = self._get_tag_from_name(dirname)
             if tag_id is None:
-                tag_id = self.new_tag(dirname, True)
+                tag_id = self.new_tag(dirname, False, True)
             else:
                 tag_id = tag_id['id']
             self._assign_tag(image_id, tag_id)
@@ -139,7 +139,7 @@ class Persistence(DataBase):
         self._log()
         return image_id
 
-    def new_tag(self, name: str, silent: bool = False) -> int:
+    def new_tag(self, name: str, is_dirname: bool, silent: bool = False) -> int:
         # sanitize tag name
         name = re.sub('[^\\w\\s\\-+=_!,;.\'"]+', '_', name)
         name = name.strip()
@@ -152,13 +152,14 @@ class Persistence(DataBase):
             self._error(409, 'Tag already present.')
 
         print(f'-> Adding new tag \'{name}\'')
-        id = self._add_tag(name)
+        id = self._add_tag(name, is_dirname)
         if id is None:
             self._error(500, 'Failed to create tag.')
 
-        self._log('Updating tags for all images.')
-        for image in self._all_images():
-            self._try_assign_tags(image['id'])
+        if not is_dirname:
+            self._log('Updating tags for all images.')
+            for image in self._all_images():
+                self._try_assign_tags(image['id'])
 
         return id
 

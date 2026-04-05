@@ -8,8 +8,9 @@ origins = [
 
 db_path = 'db.db'
 images_path = os.getenv('IMAGES_PATH')
+verbose = False
 if not images_path or not os.path.isdir(images_path):
     print('Please provide a valid IMAGES_PATH environment variable')
     exit(1)
 
-app = setup_api(db_path, images_path, origins)
+app = setup_api(db_path, images_path, verbose, origins)
