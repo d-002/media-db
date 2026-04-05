@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import shutil
 import numpy as np
 from sys import stderr
@@ -18,6 +19,30 @@ def is_image(path: str) -> bool:
         ext = ext[1:]
 
     return len(ext) > 0 and ext in extensions
+
+def start_progress():
+    global start
+    start = time.time()
+
+def progress_bar(i: int, n: int, verbose: bool):
+    spent = time.time() - start
+    eta = spent * (n / (i + 1) - 1)
+    hr_s, s = divmod(round(spent), 3600)
+    min_s, sec_s = divmod(s, 60)
+    hr_e, e = divmod(round(eta), 3600)
+    min_e, sec_e = divmod(e, 60)
+    end = '\n' if verbose else '\r'
+
+    size = 50
+    if n == 0:
+        min_e = sec_e = 0
+        prop = 1
+    else:
+        prop = i / n
+    count = round(prop * size)
+    print(f'Progress: [{'=' * count}{' ' * (size - count)}] ' \
+            f'{round(prop * 100):>3}%, spent: {hr_s}:{min_s:02}:{sec_s:02}, ' \
+            f'eta: {hr_e}:{min_e:02}:{sec_e:02}', end=end)
 
 class Persistence(DataBase):
     def __init__(self, db_file: str, images_dir: str, model: Model,
@@ -38,6 +63,9 @@ class Persistence(DataBase):
 
         present = list_files(self.images_dir)
         total = len(present)
+        start_progress()
+        progress_bar(0, total, self.verbose)
+
         for i, file in enumerate(present):
             if not is_image(file.path):
                 self._log(f'Skipping \'{file.name}\'')
@@ -52,7 +80,11 @@ class Persistence(DataBase):
                     continue
                 added += 1
 
-            print(f'Indexing {(i + 1) / total * 100:.2f}% complete.')
+            progress_bar(i + 1, total, self.verbose)
+
+        progress_bar(total, total, self.verbose)
+        if not self.verbose:
+            print()
 
         present_paths = [file.path for file in present]
         for file in self._all_images():
@@ -107,7 +139,7 @@ class Persistence(DataBase):
         return self._new_image(file, timestamp)
 
     def _new_image(self, file: FilePath, timestamp: float | None) -> int:
-        print(f'-> Adding new image \'{file.path}\'.')
+        self._log(f'-> Adding new image \'{file.path}\'.')
         if timestamp is None:
             try:
                 timestamp = os.path.getmtime(file.path)
@@ -151,7 +183,7 @@ class Persistence(DataBase):
                 return -1
             self._error(409, 'Tag already present.')
 
-        print(f'-> Adding new tag \'{name}\'')
+        self._log(f'-> Adding new tag \'{name}\'')
         id = self._add_tag(name, is_dirname)
         if id is None:
             self._error(500, 'Failed to create tag.')
@@ -169,7 +201,7 @@ class Persistence(DataBase):
             self._error(404, 'Image not present.')
 
         path = image['path']
-        print(f'Removing image {path}')
+        self._log(f'Removing image {path}')
 
         # remove from database
         self._delete_image(image['id'])

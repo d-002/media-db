@@ -134,7 +134,7 @@ class DataBase:
         embedding_blob = embedding.tobytes()
 
         self.cur.execute("""
-        INSERT INTO tags (name, embedding)
+        INSERT INTO tags (name, is_dirname, embedding)
         VALUES (?, ?, ?)""", [name, is_dirname, embedding_blob])
         self.con.commit()
 
